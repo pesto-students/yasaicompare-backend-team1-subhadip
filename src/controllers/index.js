@@ -1,0 +1,11 @@
+import DemoController from './demo.controller';
+import UserController from './user.controller';
+import ShopsController from './shops.controller';
+import AuthController from './auth.controller';
+
+export default {
+  DemoController,
+  UserController,
+  ShopsController,
+  AuthController,
+};
