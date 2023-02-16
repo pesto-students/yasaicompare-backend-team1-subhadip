@@ -1,6 +1,6 @@
 const roles = {
-  customer: ['equity', 'asset', 'expense', 'fixedIncome'],
-  vendor: ['userUpdate', 'userCreate'],
+  customer: [''],
+  vendor: [''],
 };
 
 const rolesList = Object.keys(roles);
