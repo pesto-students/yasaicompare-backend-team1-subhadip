@@ -1,6 +1,6 @@
 const roles = {
   customer: ['order'],
-  vendor: ['create_shop'],
+  vendor: ['create_shop', 'get_shops'],
 };
 
 const rolesList = Object.keys(roles);

@@ -6,7 +6,7 @@ const { ShopsModel } = Models;
  * Get all Shops
  * @returns object
  */
-const getAllShops = () => ShopsModel.findAll();
+const getAllShops = (params) => ShopsModel.findAll(params);
 
 /**
  * Create a Shop
