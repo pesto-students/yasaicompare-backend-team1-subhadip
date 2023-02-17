@@ -6,7 +6,7 @@ const { InventoryModel } = Models;
  * Get all Shops
  * @returns object
  */
-const getAllShops = (params) => InventoryModel.findAll(params);
+const getAllInventory = (params) => InventoryModel.findAll(params);
 
 /**
  * Create an Inventory
@@ -19,10 +19,10 @@ const createInventory = (data) => InventoryModel.create(data);
  * @param { string } id
  * @returns object
  */
-const getShopById = (id) => InventoryModel.findByPk(id);
+const getInventoryById = (id) => InventoryModel.findByPk(id);
 
 export default {
-  getAllShops,
-  getShopById,
+  getAllInventory,
+  getInventoryById,
   createInventory,
 };
