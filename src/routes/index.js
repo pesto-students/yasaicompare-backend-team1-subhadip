@@ -3,6 +3,7 @@ import DemoRoutes from './demo.routes';
 import UserRoutes from './user.routes';
 import ShopsRoutes from './shops.routes';
 import AuthRoutes from './auth.routes';
+import InventoryRoutes from './inventory.routes';
 
 const Router = express.Router();
 
@@ -22,6 +23,10 @@ const routes = [
   {
     path: '/auth',
     route: AuthRoutes,
+  },
+  {
+    path: '/inventory',
+    route: InventoryRoutes,
   },
 ];
 

@@ -18,6 +18,7 @@ const getShopsAction = async (req, res) => {
       owner_id: tokenData.data.user_id,
     },
     attributes: [
+      'shop_id',
       'name',
       'home_delievery_distance',
       'home_delievery_cost',
@@ -59,6 +60,7 @@ const getShopsAction = async (req, res) => {
       data: shops,
     };
     res.locals.errorMessage = JSON.stringify(returnData);
+
     return res.status(200).send(returnData);
   } catch (error) {
     /**
@@ -70,6 +72,7 @@ const getShopsAction = async (req, res) => {
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
+
     return res.status(500).send(response);
   }
 };
@@ -89,6 +92,7 @@ const getShopByIdAction = async (req, res) => {
 
   try {
     const response = await Services.ShopsService.getShopById(req.params.id);
+
     /**
      * If Shop Could Not be Found
      */
@@ -100,6 +104,7 @@ const getShopByIdAction = async (req, res) => {
       res.locals.errorMessage = JSON.stringify(returnResponse);
       return res.status(404).send(returnResponse);
     }
+
     /**
      * Shop Found
      */
@@ -109,6 +114,7 @@ const getShopByIdAction = async (req, res) => {
       data: response,
     };
     res.locals.errorMessage = JSON.stringify(returnData);
+
     return res.status(200).send(returnData);
   } catch (error) {
     /**
@@ -120,6 +126,7 @@ const getShopByIdAction = async (req, res) => {
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
+
     return res.status(500).send(response);
   }
 };
@@ -129,7 +136,7 @@ const getShopByIdAction = async (req, res) => {
  * @param {object} request
  * @returns object
  */
-const createUpdateParamValidator = async (request) => {
+const createUpdateShopParamValidator = async (request) => {
   /**
    * ValidationResponse
    */
@@ -206,7 +213,7 @@ const createUpdateParamValidator = async (request) => {
    * If Set shop_status
    */
   if (Object.prototype.hasOwnProperty.call(object, 'active')) {
-    response.data.active = object.active;
+    response.data.active = object.active.toLowerCase() === 'true';
   }
 
   return response;
@@ -222,7 +229,7 @@ const createShopAction = async (req, res) => {
   /**
    * Params Validation
    */
-  const validation = await createUpdateParamValidator(req);
+  const validation = await createUpdateShopParamValidator(req);
   if (!validation.success) {
     res.locals.errorMessage = JSON.stringify(validation);
     return res.status(400).send(validation);
@@ -230,6 +237,7 @@ const createShopAction = async (req, res) => {
 
   try {
     const response = await Services.ShopsService.createShop(validation.data);
+
     /**
      * If Shop Could Not be created
      */
@@ -241,6 +249,7 @@ const createShopAction = async (req, res) => {
     if (response === null) {
       return res.status(500).send(returnResponse);
     }
+
     /**
      * Shop Created Successfully
      */
@@ -250,6 +259,7 @@ const createShopAction = async (req, res) => {
       data: response,
     };
     res.locals.errorMessage = JSON.stringify(returnData);
+
     return res.status(201).send(returnData);
   } catch (error) {
     /**
@@ -261,6 +271,7 @@ const createShopAction = async (req, res) => {
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
+
     return res.status(502).send(response);
   }
 };

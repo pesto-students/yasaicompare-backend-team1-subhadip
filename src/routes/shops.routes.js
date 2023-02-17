@@ -6,6 +6,11 @@ const ShopsRouter = express.Router();
 const AuthMiddleware = Middleware.authMiddleware;
 
 /**
+ * 
+    ============================ GET METHODS ======================================
+ */
+
+/**
  * Get All the Shops of the Vendor
  */
 ShopsRouter.get(
@@ -22,6 +27,11 @@ ShopsRouter.get(
   AuthMiddleware.auth('get_shops'),
   Controllers.ShopsController.getShopByIdAction
 );
+
+/**
+ * 
+    ============================ POST METHODS ======================================
+ */
 
 /**
  * Register A Shop Vendor

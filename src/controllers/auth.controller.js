@@ -203,7 +203,7 @@ const registerAction = async (req, res) => {
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
-    return res.status(502).send(response);
+    return res.status(500).send(response);
   }
 };
 
