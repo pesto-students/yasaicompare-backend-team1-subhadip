@@ -32,4 +32,13 @@ ShopsRouter.post(
   Controllers.ShopsController.createShopAction
 );
 
+/**
+ * Create An Item in Shop
+ */
+ShopsRouter.post(
+  '/create_inventory',
+  AuthMiddleware.auth('create_inventory'),
+  Controllers.ShopsController.createInventoryAction
+);
+
 export default ShopsRouter;

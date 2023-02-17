@@ -1,5 +1,4 @@
 // import querystring from 'querystring';
-import { type } from 'os';
 import Services from '../services';
 import Helpers from '../utils/helpers';
 
@@ -19,7 +18,6 @@ const getShopsAction = async (req, res) => {
       owner_id: tokenData.data.user_id,
     },
     attributes: [
-      'shop_id',
       'name',
       'home_delievery_distance',
       'home_delievery_cost',
@@ -131,7 +129,7 @@ const getShopByIdAction = async (req, res) => {
  * @param {object} request
  * @returns object
  */
-const createUpdateShopParamValidator = async (request) => {
+const createUpdateParamValidator = async (request) => {
   /**
    * ValidationResponse
    */
@@ -208,7 +206,7 @@ const createUpdateShopParamValidator = async (request) => {
    * If Set shop_status
    */
   if (Object.prototype.hasOwnProperty.call(object, 'active')) {
-    response.data.active = Boolean(object.active);
+    response.data.active = object.active;
   }
 
   return response;
@@ -224,7 +222,7 @@ const createShopAction = async (req, res) => {
   /**
    * Params Validation
    */
-  const validation = await createUpdateShopParamValidator(req);
+  const validation = await createUpdateParamValidator(req);
   if (!validation.success) {
     res.locals.errorMessage = JSON.stringify(validation);
     return res.status(400).send(validation);
@@ -267,176 +265,8 @@ const createShopAction = async (req, res) => {
   }
 };
 
-/**
- * Create / Update Shop Inventory
- * @param {object} request
- * @returns object
- */
-const createUpdateInventoryParamValidator = async (request, mode) => {
-  /**
-   * ValidationResponse
-   */
-  const response = {
-    success: false,
-    message: '',
-    data: {},
-  };
-
-  const object = request.body;
-
-  /**
-   * Missing Shop ID
-   */
-  if (!Object.prototype.hasOwnProperty.call(object, 'shop_id')) {
-    response.message = 'Shop Id is Required';
-    return response;
-  }
-
-  /**
-   * If Item ID is set
-   */
-  if (
-    Object.prototype.hasOwnProperty.call(object, 'inventory_id') &&
-    mode === 'update'
-  ) {
-    response.data.inventory_id = object.inventory_id;
-  }
-
-  /**
-   * If Name is Set
-   */
-  if (
-    Object.prototype.hasOwnProperty.call(object, 'name') ||
-    mode === 'update'
-  ) {
-    response.data.name = object.name;
-  } else {
-    response.message = 'Name is Required';
-    return response;
-  }
-
-  /**
-   * If Category is Set
-   */
-  if (
-    Object.prototype.hasOwnProperty.call(object, 'category') ||
-    mode === 'update'
-  ) {
-    response.data.category_id = object.category;
-  } else {
-    response.message = 'Category is Required';
-    return response;
-  }
-
-  /**
-   * If Price is Set
-   */
-  if (
-    Object.prototype.hasOwnProperty.call(object, 'price') ||
-    mode === 'update'
-  ) {
-    response.data.price = object.price;
-  } else {
-    response.message = 'Price is Required';
-    return response;
-  }
-
-  /**
-   * If Quantity is Set
-   */
-  if (
-    Object.prototype.hasOwnProperty.call(object, 'quantity') ||
-    mode === 'update'
-  ) {
-    response.data.quantity = object.quantity;
-  } else {
-    response.message = 'Quantity is Required';
-    return response;
-  }
-
-  /**
-   * If In Stock
-   */
-  if (
-    Object.prototype.hasOwnProperty.call(object, 'in_stock') ||
-    mode === 'update'
-  ) {
-    response.data.in_stock = Boolean(object.in_stock);
-  }
-
-  /**
-   * If Image Url is set
-   */
-  if (
-    Object.prototype.hasOwnProperty.call(object, 'image_path') ||
-    mode === 'update'
-  ) {
-    response.data.image = object.image_path;
-  }
-
-  response.success = true;
-  return response;
-};
-
-/**
- * Create an Item
- * @param {object} req
- * @param {object} res
- * @returns object
- */
-const createInventoryAction = async (req, res) => {
-  /**
-   * Params Validation
-   */
-  const validation = await createUpdateInventoryParamValidator(req, 'create');
-  if (!validation.success) {
-    res.locals.errorMessage = JSON.stringify(validation);
-    delete validation.data;
-    return res.status(400).send(validation);
-  }
-
-  try {
-    const response = await Services.InventoryService.createInventory(
-      validation.data
-    );
-    /**
-     * If Inventory Could Not be created
-     */
-    const returnResponse = {
-      success: false,
-      message: 'Item Could not be created',
-    };
-    res.locals.errorMessage = JSON.stringify(returnResponse);
-    if (response === null) {
-      return res.status(500).send(returnResponse);
-    }
-    /**
-     * Item Created Successfully
-     */
-    const returnData = {
-      success: true,
-      message: 'Item Created Successfully',
-      data: response,
-    };
-    res.locals.errorMessage = JSON.stringify(returnData);
-    return res.status(201).send(returnData);
-  } catch (error) {
-    /**
-     * Error Occured
-     */
-    const response = {
-      success: false,
-      message: 'An error Occured while creating Item',
-      data: error,
-    };
-    res.locals.errorMessage = JSON.stringify(response);
-    return res.status(502).send(response);
-  }
-};
-
 export default {
   getShopsAction,
   createShopAction,
   getShopByIdAction,
-  createInventoryAction,
 };
