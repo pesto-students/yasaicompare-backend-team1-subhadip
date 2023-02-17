@@ -2,12 +2,76 @@
 import Services from '../services';
 import Helpers from '../utils/helpers';
 
-const getShops = async (req, res) => {
-  const shops = await Services.ShopsService.getAllShops();
-  res.status(200).send({
-    success: true,
-    data: shops,
-  });
+const getShopsAction = async (req, res) => {
+  /**
+   * JWT Token Decoded
+   */
+  const tokenData = await Helpers.JWT.decodeJWTToken(
+    Helpers.Validator.headerValidator(req)
+  );
+
+  /**
+   * Filter Data
+   */
+  const filter = {
+    where: {
+      owner_id: tokenData.data.user_id,
+    },
+    attributes: [
+      'name',
+      'home_delievery_distance',
+      'home_delievery_cost',
+      'active',
+    ],
+  };
+
+  /**
+   * If Status Check Set
+   */
+  if (Object.prototype.hasOwnProperty.call(req.query, 'active')) {
+    filter.where.active = req.query.active.toLowerCase() === 'true';
+  }
+
+  try {
+    /**
+     * Hitting Service
+     */
+    const shops = await Services.ShopsService.getAllShops(filter);
+
+    /**
+     * If Shops Could Not be Found
+     */
+    if (shops === null) {
+      const returnResponse = {
+        success: false,
+        message: 'Shop(s) not found',
+      };
+      res.locals.errorMessage = JSON.stringify(returnResponse);
+      return res.status(404).send(returnResponse);
+    }
+
+    /**
+     * Shops Found
+     */
+    const returnData = {
+      success: true,
+      message: `Shop(s) Found`,
+      data: shops,
+    };
+    res.locals.errorMessage = JSON.stringify(returnData);
+    return res.status(200).send(returnData);
+  } catch (error) {
+    /**
+     * Error Occured
+     */
+    const response = {
+      success: false,
+      message: 'An error Occured while retrieving Shop(s)',
+      data: error,
+    };
+    res.locals.errorMessage = JSON.stringify(response);
+    return res.status(500).send(response);
+  }
 };
 
 /**
@@ -16,10 +80,11 @@ const getShops = async (req, res) => {
  * @param {object} res
  * @returns object
  */
-const getShopById = async (req, res) => {
+const getShopByIdAction = async (req, res) => {
   if (!Object.prototype.hasOwnProperty.call(req.params, 'id')) {
-    res.status(400).send({ success: false, message: 'Id is Required' });
-    return;
+    const validationResponse = { success: false, message: 'Id is Required' };
+    res.locals.errorMessage = JSON.stringify(validationResponse);
+    return res.status(400).send(validationResponse);
   }
 
   try {
@@ -28,30 +93,34 @@ const getShopById = async (req, res) => {
      * If Shop Could Not be Found
      */
     if (response === null) {
-      res.status(404).send({
+      const returnResponse = {
         success: false,
         message: 'Shop not found',
-      });
-      return;
+      };
+      res.locals.errorMessage = JSON.stringify(returnResponse);
+      return res.status(404).send(returnResponse);
     }
     /**
      * Shop Found
      */
-    res.status(200).send({
+    const returnData = {
       success: true,
       message: `Shop Found`,
       data: response,
-    });
-    return;
+    };
+    res.locals.errorMessage = JSON.stringify(returnData);
+    return res.status(200).send(returnData);
   } catch (error) {
     /**
      * Error Occured
      */
-    res.status(500).send({
+    const response = {
       success: false,
       message: 'An error Occured while retrieving Shop',
       data: error,
-    });
+    };
+    res.locals.errorMessage = JSON.stringify(response);
+    return res.status(500).send(response);
   }
 };
 
@@ -99,16 +168,6 @@ const createUpdateParamValidator = async (request) => {
     Helpers.Validator.headerValidator(request)
   );
 
-  /**
-   * Get User
-   */
-  const user = await Services.UserService.getUserById(tokenData.data.user_id);
-
-  if (user.role !== 'vendor') {
-    response.message = 'User cannot create Shop';
-    return response;
-  }
-
   response = {
     success: true,
     data: {
@@ -143,6 +202,13 @@ const createUpdateParamValidator = async (request) => {
     response.data.home_delievery_distance = object.home_delievery_distance;
   }
 
+  /**
+   * If Set shop_status
+   */
+  if (Object.prototype.hasOwnProperty.call(object, 'active')) {
+    response.data.active = object.active;
+  }
+
   return response;
 };
 
@@ -152,14 +218,14 @@ const createUpdateParamValidator = async (request) => {
  * @param {object} res
  * @returns object
  */
-const createShop = async (req, res) => {
+const createShopAction = async (req, res) => {
   /**
    * Params Validation
    */
   const validation = await createUpdateParamValidator(req);
   if (!validation.success) {
-    res.status(400).send(validation);
-    return;
+    res.locals.errorMessage = JSON.stringify(validation);
+    return res.status(400).send(validation);
   }
 
   try {
@@ -167,36 +233,40 @@ const createShop = async (req, res) => {
     /**
      * If Shop Could Not be created
      */
+    const returnResponse = {
+      success: false,
+      message: 'Shop Could not be created',
+    };
+    res.locals.errorMessage = JSON.stringify(returnResponse);
     if (response === null) {
-      res.status(500).send({
-        success: false,
-        message: 'Shop Could not be created',
-      });
-      return;
+      return res.status(500).send(returnResponse);
     }
     /**
      * Shop Created Successfully
      */
-    res.status(201).send({
+    const returnData = {
       success: true,
       message: 'Shop Created Successfully',
       data: response,
-    });
-    return;
+    };
+    res.locals.errorMessage = JSON.stringify(returnData);
+    return res.status(201).send(returnData);
   } catch (error) {
     /**
      * Error Occured
      */
-    res.status(502).send({
+    const response = {
       success: false,
       message: 'An error Occured while creating Shop',
       data: error,
-    });
+    };
+    res.locals.errorMessage = JSON.stringify(response);
+    return res.status(502).send(response);
   }
 };
 
 export default {
-  getShops,
-  createShop,
-  getShopById,
+  getShopsAction,
+  createShopAction,
+  getShopByIdAction,
 };

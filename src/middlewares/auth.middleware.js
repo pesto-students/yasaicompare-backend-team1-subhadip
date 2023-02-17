@@ -1,6 +1,9 @@
-import ACCESS_LIST from '../config';
+import Config from '../config';
 import Helper from '../utils/helpers';
-import UserService from '../services';
+import Services from '../services';
+
+const { UserService } = Services;
+const { ACCESS_LIST } = Config;
 
 const checkRoleAccess = (req, res, next, accessRights, user) => {
   if (accessRights.length) {
@@ -30,13 +33,13 @@ const fetchUser = async (jwt) => {
   }
 
   const getUser = await UserService.getUserById(jwt.data.user_id);
-  if (!getUser.success) {
+  if (getUser === null) {
     return false;
   }
 
   return {
-    user_id: getUser.data.user_id,
-    role: getUser.data.role,
+    user_id: getUser.user_id,
+    role: getUser.role,
   };
 };
 
@@ -50,12 +53,14 @@ const auth =
     const token = Helper.Validator.headerValidator(req);
     if (!token) {
       response.message = 'Required Authorization Token';
+      res.locals.errorMessage = JSON.stringify(response);
       res.status(401).send(response);
       return;
     }
 
     const jwtDecoded = await Helper.JWT.decodeJWTToken(token);
     if (!jwtDecoded.success) {
+      res.locals.errorMessage = JSON.stringify(jwtDecoded);
       res.status(401).send(jwtDecoded);
       return;
     }
@@ -67,6 +72,7 @@ const auth =
       next();
     } else {
       response.message = 'Access Forbidden';
+      res.locals.errorMessage = JSON.stringify(response);
       res.status(403).send(response);
     }
   };

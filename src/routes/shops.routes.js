@@ -1,11 +1,35 @@
 import express from 'express';
 import Controllers from '../controllers';
+import Middleware from '../middlewares';
 
 const ShopsRouter = express.Router();
+const AuthMiddleware = Middleware.authMiddleware;
 
-ShopsRouter.get('/', Controllers.ShopsController.getShops);
-ShopsRouter.get('/:id', Controllers.ShopsController.getShopById);
+/**
+ * Get All the Shops of the Vendor
+ */
+ShopsRouter.get(
+  '/',
+  AuthMiddleware.auth('get_shops'),
+  Controllers.ShopsController.getShopsAction
+);
 
-ShopsRouter.post('/create', Controllers.ShopsController.createShop);
+/**
+ * Get Shop By Id
+ */
+ShopsRouter.get(
+  '/:id',
+  AuthMiddleware.auth('get_shops'),
+  Controllers.ShopsController.getShopByIdAction
+);
+
+/**
+ * Register A Shop Vendor
+ */
+ShopsRouter.post(
+  '/create',
+  AuthMiddleware.auth('create_shop'),
+  Controllers.ShopsController.createShopAction
+);
 
 export default ShopsRouter;

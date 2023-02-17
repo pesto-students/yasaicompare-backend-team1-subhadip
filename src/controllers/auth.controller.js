@@ -40,6 +40,7 @@ const loginAction = async (req, res) => {
    */
   const validationResponse = loginValidator(req);
   if (!validationResponse.success) {
+    res.locals.errorMessage = JSON.stringify(validationResponse);
     return res.status(400).send(validationResponse);
   }
 
@@ -62,10 +63,12 @@ const loginAction = async (req, res) => {
      * If User Could Not be Found
      */
     if (response === null) {
-      return res.status(404).send({
+      const returnResponse = {
         success: false,
         message: 'User not found',
-      });
+      };
+      res.locals.errorMessage = JSON.stringify(returnResponse);
+      return res.status(404).send(returnResponse);
     }
     /**
      * Creating Token
@@ -78,22 +81,26 @@ const loginAction = async (req, res) => {
     /**
      * User Found
      */
-    return res.status(200).send({
+    const returnData = {
       success: true,
       message: `User Successfully Logged In`,
       data: {
         token,
       },
-    });
+    };
+    res.locals.errorMessage = JSON.stringify(returnData);
+    return res.status(200).send(returnData);
   } catch (error) {
     /**
      * Error Occured
      */
-    return res.status(500).send({
+    const response = {
       success: false,
       message: 'An error Occured while retrieving User',
       data: error,
-    });
+    };
+    res.locals.errorMessage = JSON.stringify(response);
+    return res.status(500).send(response);
   }
 };
 
@@ -143,6 +150,7 @@ const registerAction = async (req, res) => {
    */
   const validationResponse = registerValidator(req);
   if (!validationResponse.success) {
+    res.locals.errorMessage = JSON.stringify(validationResponse);
     return res.status(400).send(validationResponse);
   }
 
@@ -168,28 +176,34 @@ const registerAction = async (req, res) => {
      * If User Could Not be created
      */
     if (response === null) {
-      return res.status(500).send({
+      const returnResponse = {
         success: false,
         message: 'User Could not be created',
-      });
+      };
+      res.locals.errorMessage = JSON.stringify(returnResponse);
+      return res.status(500).send(returnResponse);
     }
     /**
      * User Created Successfully
      */
-    return res.status(201).send({
+    const returnData = {
       success: true,
       message: 'User Created Successfully',
       data: response,
-    });
+    };
+    res.locals.errorMessage = JSON.stringify(returnData);
+    return res.status(201).send(returnData);
   } catch (error) {
     /**
      * Error Occured
      */
-    return res.status(502).send({
+    const response = {
       success: false,
       message: 'An error Occured while creating user',
       data: error,
-    });
+    };
+    res.locals.errorMessage = JSON.stringify(response);
+    return res.status(502).send(response);
   }
 };
 

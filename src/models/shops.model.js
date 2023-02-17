@@ -64,6 +64,11 @@ const ShopsModel = DATABASE.define(
       defaultValue: 1,
       uniqueKey: false,
     },
+    active: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
   },
   {
     timestamps: true,
