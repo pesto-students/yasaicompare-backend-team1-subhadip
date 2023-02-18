@@ -3,10 +3,16 @@ import Models from '../models';
 const { InventoryModel } = Models;
 
 /**
- * Get all Shops
+ * Get all Inventory Items
  * @returns object
  */
 const getAllInventory = (params) => InventoryModel.findAll(params);
+
+/**
+ * Get all Inventory Items
+ * @returns object
+ */
+const getInventory = (params) => InventoryModel.findOne(params);
 
 /**
  * Create an Inventory
@@ -15,7 +21,13 @@ const getAllInventory = (params) => InventoryModel.findAll(params);
 const createInventory = (data) => InventoryModel.create(data);
 
 /**
- * Get Shop By ID
+ * Update an Inventory
+ * @returns object
+ */
+const updateInventory = (data, filter) => InventoryModel.update(data, filter);
+
+/**
+ * Get Item By ID
  * @param { string } id
  * @returns object
  */
@@ -25,4 +37,6 @@ export default {
   getAllInventory,
   getInventoryById,
   createInventory,
+  getInventory,
+  updateInventory,
 };

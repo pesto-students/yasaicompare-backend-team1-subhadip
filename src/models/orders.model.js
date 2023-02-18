@@ -7,7 +7,7 @@ const OrderModel = DATABASE.define(
   'order',
   {
     order_id: {
-      type: Sequelize.UUID,
+      type: Sequelize.STRING,
       defaultValue: Sequelize.UUIDV4,
       allowNull: false,
       primaryKey: true,
