@@ -30,7 +30,7 @@ const getShopsAction = async (req, res) => {
    * If Status Check Set
    */
   if (Object.prototype.hasOwnProperty.call(req.query, 'active')) {
-    filter.where.active = req.query.active.toLowerCase() === 'true';
+    filter.where.active = req.query.active === true || req.query.active === "true";
   }
 
   try {
@@ -213,7 +213,7 @@ const createUpdateShopParamValidator = async (request) => {
    * If Set shop_status
    */
   if (Object.prototype.hasOwnProperty.call(object, 'active')) {
-    response.data.active = object.active.toLowerCase() === 'true';
+    response.data.active = object.active === true || object.active === "true";
   }
 
   return response;

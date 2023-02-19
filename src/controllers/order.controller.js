@@ -35,7 +35,8 @@ const getOrdersAction = async (req, res) => {
    * If Status Check Set
    */
   if (Object.prototype.hasOwnProperty.call(req.query, 'active')) {
-    filter.where.active = req.query.active.toLowerCase() === 'true';
+    filter.where.active =
+      req.query.active === true || req.query.active === 'true';
   }
 
   try {
@@ -210,32 +211,41 @@ const createOrderData = async (request, mode) => {
   const groupId = `${response.data.customer_id} - ${orderNumber}`;
 
   const finalData = await Promise.all(
-    object.orders.map(async (item) => {
+    /**
+     * Loop orders
+     */
+    object.orders.map(async (order) => {
       const validatedItem = {};
       if (
-        !Object.prototype.hasOwnProperty.call(item, 'shop_id') &&
-        !Object.prototype.hasOwnProperty.call(item, 'item_id') &&
-        !Object.prototype.hasOwnProperty.call(item, 'amount')
+        !Object.prototype.hasOwnProperty.call(order, 'shop_id') &&
+        !Object.prototype.hasOwnProperty.call(order, 'items')
       ) {
         return false;
       }
 
-      validatedItem.shop_id = item.shop_id;
-      validatedItem.item_id = item.item_id;
-      validatedItem.amount = item.amount;
+      validatedItem.shop_id = order.shop_id;
       const orderId = `${groupId} - ${validatedItem.shop_id}`;
+      let totalAmount = 0;
 
+      let shopItems = [];
       /**
-       * If set Quantity
+       * Loop Order Items
+       * @returns object
        */
-      if (Object.prototype.hasOwnProperty.call(item, 'quantity')) {
-        validatedItem.quantity = item.quantity;
-      } else {
-        validatedItem.quantity = 1;
-      }
+      for (const item of order.items) {
+        validatedItem.item_id = item.item_id;
+        validatedItem.amount = item.amount;
 
-      let itemData = async () => {
-        filter = {
+        /**
+         * If set Quantity
+         */
+        if (Object.prototype.hasOwnProperty.call(item, 'quantity')) {
+          validatedItem.quantity = item.quantity;
+        } else {
+          validatedItem.quantity = 1;
+        }
+
+        const itemfilter = {
           where: {
             inventory_id: validatedItem.item_id,
             shop_id: validatedItem.shop_id,
@@ -247,18 +257,16 @@ const createOrderData = async (request, mode) => {
           },
         };
 
-        const inventory = await Services.InventoryService.getInventory(filter);
+        const inventory = await Services.InventoryService.getInventory(
+          itemfilter
+        );
         if (inventory === null) {
-          return false;
+          /**
+           * Push into Result Array
+           */
+          shopItems.push(false);
+          continue;
         }
-
-        filter = {
-          where: {
-            customer_id: response.data.customer_id,
-          },
-          distinct: true,
-          col: 'customer_id',
-        };
 
         const updatedInventory = inventory.quantity - validatedItem.quantity;
 
@@ -269,29 +277,40 @@ const createOrderData = async (request, mode) => {
             price: inventory.price,
             quantity: validatedItem.quantity,
           },
-          orderData: {
-            order_id: orderId,
-            order_no: orderNumber,
-            customer_id: response.data.customer_id,
-            amount: inventory.price * validatedItem.quantity,
-            order_group_id: groupId,
-            shop_id: validatedItem.shop_id,
-          },
           inventoryData: {
             inventory_id: validatedItem.item_id,
             quantity: updatedInventory,
           },
         };
 
+        /**
+         * Calculating Total Price
+         */
+        totalAmount += inventory.price * validatedItem.quantity;
+
         if (updatedInventory === 0) {
           preparedData.inventoryData.in_stock = false;
         }
 
-        return preparedData;
+        /**
+         * Push into Result Array
+         */
+        shopItems.push(preparedData);
+      }
+
+      shopItems = {
+        orderData: {
+          order_id: orderId,
+          order_no: orderNumber,
+          customer_id: response.data.customer_id,
+          amount: totalAmount,
+          order_group_id: groupId,
+          shop_id: validatedItem.shop_id,
+        },
+        shopItems,
       };
 
-      itemData = await itemData();
-      return itemData;
+      return shopItems;
     })
   );
 
@@ -316,16 +335,16 @@ const createOrderAction = async (req, res) => {
     return res.status(400).send(validation);
   }
 
-  const transaction = await DATABASE.transaction();
-
   try {
-    validation.data.forEach(async (item) => {
-      if (item === false) {
-        return;
-      }
+    /**
+     * Start Transaction
+     */
+    const transaction = await DATABASE.transaction();
 
-      const { orderItemData, orderData, inventoryData } = item;
+    validation.data.forEach(async (order) => {
+      const { orderData, shopItems } = order;
 
+      console.log(orderData, '347');
       /**
        * Create Order
        */
@@ -334,21 +353,36 @@ const createOrderAction = async (req, res) => {
       /**
        * Create Order Items
        */
-      await Services.OrderItemService.createOrderItem(
-        orderItemData,
-        transaction
-      );
+      // await Promise.all(
+        await
+        shopItems.forEach(async (shopItem) => {
+          /**
+           * Skip if false
+           */
+          if (shopItem === false) {
+            return;
+          }
 
-      const inventoryId = inventoryData.inventory_id;
-      delete inventoryData.inventory_id;
+          await Services.OrderItemService.createOrderItem(
+            shopItem.orderItemData,
+            transaction
+          );
 
-      /**
-       * Update Inventory
-       */
-      await Services.InventoryService.updateInventory(inventoryData, {
-        transaction,
-        where: { inventory_id: inventoryId },
-      });
+          const inventoryId = shopItem.inventoryData.inventory_id;
+          delete shopItem.inventoryData.inventory_id;
+
+          /**
+           * Update Inventory
+           */
+          await Services.InventoryService.updateInventory(
+            shopItem.inventoryData,
+            {
+              transaction,
+              where: { inventory_id: inventoryId },
+            }
+          );
+        });
+      // );
     });
 
     /**

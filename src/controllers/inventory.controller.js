@@ -38,7 +38,7 @@ const getAllInventoryAction = async (req, res) => {
    * If in stock Set
    */
   if (Object.prototype.hasOwnProperty.call(req.query, 'in_stock')) {
-    filter.where.in_stock = req.query.in_stock.toLowerCase() === 'true';
+    filter.where.in_stock = req.query.in_stock === true || req.query.in_stock === "true";
   }
 
   try {
@@ -260,7 +260,7 @@ const createUpdateInventoryParamValidator = async (request, mode) => {
     Object.prototype.hasOwnProperty.call(object, 'in_stock') ||
     mode === 'update'
   ) {
-    response.data.in_stock = object.in_stock.toLowerCase() === 'true';
+    response.data.in_stock = object.in_stock === true || object.in_stock === "true";
   }
 
   /**

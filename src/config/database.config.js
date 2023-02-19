@@ -18,6 +18,17 @@ switch (process.env.ENV) {
     });
     break;
 
+  case 'anugrah-dev':
+    database = new Sequelize({
+      ...databaseConfig.anugrahDev,
+      pool: {
+        max: 5,
+        min: 0,
+        idle: 10000,
+      },
+    });
+    break;
+
   default:
     database = new Sequelize({
       ...databaseConfig.development,
