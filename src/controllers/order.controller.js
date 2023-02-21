@@ -121,18 +121,21 @@ const getOrderByIdAction = async (req, res) => {
     Helpers.Validator.headerValidator(req)
   );
 
-  const filter = {
+  let filter = {
     where: {
       order_group_id: req.params.id,
       customer_id: tokenData.data.user_id,
     },
+    attributes: ['shop_id'],
+    group: ['shop_id'],
   };
 
-  // const orderDetails = {};
   try {
+    /**
+     * Get Order Id from DB
+     */
     const response = await Services.OrderService.getOrderById(filter);
-    console.log(Object.keys(response));
-
+    // delete response['1']; //temp
 
     /**
      * If Order Could Not be Found
@@ -146,38 +149,58 @@ const getOrderByIdAction = async (req, res) => {
       return res.status(404).send(returnResponse);
     }
 
-    // const orderDetails = await response.forEach(async (order) => {
-    //   /**
-    //    * Filter for Order Items in Order
-    //    */
-    //   filter = {
-    //     where: {
-    //       order_id: order.order_id,
-    //     },
-    //   };
-    //   console.log(filter);
+    const shopsData = await response.map(async (shop) => {
+      /**
+       * Filter to get Shop Orders in Order
+       */
+      filter = {
+        where: {
+          shop_id: shop.shop_id,
+          order_group_id: req.params.id,
+        },
+      };
+      let orders = (await Services.OrderService.getAllOrders(filter))[0];
 
-    //   const orderItem = await Services.OrderItemService.getOrderItems(filter);
+      /**
+       * Filter to get Ordered Items from Shop in Order
+       */
+      filter = {
+        where: {
+          order_id: orders.order_id,
+        },
+      };
+      const items = await Services.OrderItemService.getOrderItems(filter);
 
-    //   /**
-    //    * Filter for Item
-    //    */
-    //   // filter = {
-    //   //   where: {
-    //   //     inventory_id: orderItem.item_id,
-    //   //     shop_id: order.shop_id,
-    //   //   },
-    //   // };
-    //   // const itemDetails = await Services.InventoryService.getInventory(filter);
-    //   console.log(orderItem);
+      let itemsFormattedData = [];
+      for (const item of items) {
+        const formattedData = {
+          item_id: item.item_id,
+          order_id: item.order_id,
+          price: item.price,
+          quantity: item.quantity,
+          fulfilled: item.fulfilled,
+          rejection_reason: item.rejection_reason,
+        };
 
-    // });
+        itemsFormattedData.push(formattedData);
+      }
 
-    orderDetails = {
+      /**
+       * Shop and It's ordered Items
+       */
+      const preparedData = {
+        shop_id: shop.shop_id,
+        items: itemsFormattedData,
+      };
+
+      return preparedData;
+    });
+
+    let returnData = await Promise.all(shopsData);
+    returnData = {
       order_group_id: req.params.id,
-      orderDetails
+      orderData: returnData,
     };
-
     return res.status(200).send(returnData);
   } catch (error) {
     /**
@@ -188,6 +211,7 @@ const getOrderByIdAction = async (req, res) => {
       message: 'An error Occured while retrieving Order',
       data: error,
     };
+    console.log(error);
     res.locals.errorMessage = JSON.stringify(response);
 
     return res.status(500).send(response);

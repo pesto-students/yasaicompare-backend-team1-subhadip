@@ -77,7 +77,7 @@ const loginAction = async (req, res) => {
       user_id: response.user_id,
       role: response.role,
     };
-    const token = Helpers.JWT.createJWTToken(jwtData, '1800s');
+    const token = Helpers.JWT.createJWTToken(jwtData, '3600s');
     /**
      * User Found
      */

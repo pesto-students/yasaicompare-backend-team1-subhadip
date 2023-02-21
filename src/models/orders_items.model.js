@@ -7,9 +7,10 @@ const OrderItemsModel = DATABASE.define(
   'order_items',
   {
     item_id: {
-      type: Sequelize.STRING,
+      type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,
       allowNull: false,
+      primaryKey: true,
     },
     order_id: {
       type: Sequelize.STRING,
