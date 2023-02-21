@@ -3,10 +3,10 @@ import Models from '../models';
 const { OrderItemsModel } = Models;
 
 /**
- * Get all Orders
+ * Get all Order Items
  * @returns object
  */
-const getAllOrders = (params) => OrderItemsModel.findAll(params);
+const getOrderItems = (params) => OrderItemsModel.findAll(params);
 
 /**
  * Create an Inventory
@@ -30,7 +30,7 @@ const getOrderById = (id) => OrderItemsModel.findByPk(id);
 const getOrdersCount = (filter) => OrderItemsModel.count(filter);
 
 export default {
-  getAllOrders,
+  getOrderItems,
   createOrderItem,
   getOrderById,
   getOrdersCount,

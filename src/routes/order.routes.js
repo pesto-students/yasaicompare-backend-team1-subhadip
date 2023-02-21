@@ -11,22 +11,22 @@ const AuthMiddleware = Middleware.authMiddleware;
  */
 
 /**
- * Get All the Inventory of Shop
+ * Get All the Orders of Customer
  */
-// OrderRouter.get(
-//   '/',
-//   AuthMiddleware.auth('get_inventory'),
-//   Controllers.OrderController.getAllInventoryAction
-// );
+OrderRouter.get(
+  '/',
+  AuthMiddleware.auth('get_orders'),
+  Controllers.OrderController.getOrdersAction
+);
 
 /**
- * Get Shop By Id
+ * Get Order By Id
  */
-// OrderRouter.get(
-//   '/:shop_id',
-//   AuthMiddleware.auth('get_inventory'),
-//   Controllers.OrderController.getInventoryByIdAction
-// );
+OrderRouter.get(
+  '/:id',
+  AuthMiddleware.auth('get_orders'),
+  Controllers.OrderController.getOrderByIdAction
+);
 
 /**
  * 

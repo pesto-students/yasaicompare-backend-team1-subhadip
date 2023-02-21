@@ -19,7 +19,7 @@ const createOrder = (data, transaction) => OrderModel.create(data, transaction);
  * @param { string } id
  * @returns object
  */
-const getOrderById = (id) => OrderModel.findByPk(id);
+const getOrderById = (filter) => OrderModel.findAll(filter);
 
 /**
  * Get Order Count

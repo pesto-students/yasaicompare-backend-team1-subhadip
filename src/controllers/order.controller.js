@@ -7,6 +7,12 @@ import config from '../config';
 const Operator = sequelize.Op;
 const { DATABASE } = config;
 
+/**
+ * Get User Orders
+ * @param {object} req
+ * @param {object} res
+ * @returns object
+ */
 const getOrdersAction = async (req, res) => {
   /**
    * JWT Token Decoded
@@ -20,50 +26,59 @@ const getOrdersAction = async (req, res) => {
    */
   const filter = {
     where: {
-      owner_id: tokenData.data.user_id,
+      customer_id: tokenData.data.user_id,
     },
     attributes: [
-      'shop_id',
-      'name',
-      'home_delievery_distance',
-      'home_delievery_cost',
-      'active',
+      'order_group_id',
+      'amount',
+      'order_status',
+      'payment_status',
+      'delievery_charge',
+      'createdAt',
+      'updatedAt',
     ],
+    group: ['order_group_id'],
   };
 
   /**
-   * If Status Check Set
+   * If Payment Status is Set
    */
-  if (Object.prototype.hasOwnProperty.call(req.query, 'active')) {
-    filter.where.active =
-      req.query.active === true || req.query.active === 'true';
+  if (Object.prototype.hasOwnProperty.call(req.query, 'payment_status')) {
+    filter.where.payment_status = req.query.payment_status;
+  }
+
+  /**
+   * If Order Status is Set
+   */
+  if (Object.prototype.hasOwnProperty.call(req.query, 'order_status')) {
+    filter.where.order_status = req.query.order_status;
   }
 
   try {
     /**
      * Hitting Service
      */
-    const shops = await Services.ShopsService.getAllShops(filter);
+    const orders = await Services.OrderService.getAllOrders(filter);
 
     /**
-     * If Shops Could Not be Found
+     * If Orders Could Not be Found
      */
-    if (shops === null) {
+    if (orders === null) {
       const returnResponse = {
         success: false,
-        message: 'Shop(s) not found',
+        message: 'Orders(s) not found',
       };
       res.locals.errorMessage = JSON.stringify(returnResponse);
       return res.status(404).send(returnResponse);
     }
 
     /**
-     * Shops Found
+     * Orders Found
      */
     const returnData = {
       success: true,
-      message: `Shop(s) Found`,
-      data: shops,
+      message: `Order(s) Found`,
+      data: orders,
     };
     res.locals.errorMessage = JSON.stringify(returnData);
 
@@ -74,7 +89,7 @@ const getOrdersAction = async (req, res) => {
      */
     const response = {
       success: false,
-      message: 'An error Occured while retrieving Shop(s)',
+      message: 'An error Occured while retrieving Order(s)',
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
@@ -84,42 +99,84 @@ const getOrdersAction = async (req, res) => {
 };
 
 /**
- * Get Shop By ID
+ * Get Order By ID
  * @param {object} req
  * @param {object} res
  * @returns object
  */
-const getShopByIdAction = async (req, res) => {
+const getOrderByIdAction = async (req, res) => {
+  /**
+   * Order group Id Not Set
+   */
   if (!Object.prototype.hasOwnProperty.call(req.params, 'id')) {
     const validationResponse = { success: false, message: 'Id is Required' };
     res.locals.errorMessage = JSON.stringify(validationResponse);
     return res.status(400).send(validationResponse);
   }
 
+  /**
+   * JWT Token Decoded
+   */
+  const tokenData = await Helpers.JWT.decodeJWTToken(
+    Helpers.Validator.headerValidator(req)
+  );
+
+  const filter = {
+    where: {
+      order_group_id: req.params.id,
+      customer_id: tokenData.data.user_id,
+    },
+  };
+
+  // const orderDetails = {};
   try {
-    const response = await Services.ShopsService.getShopById(req.params.id);
+    const response = await Services.OrderService.getOrderById(filter);
+    console.log(Object.keys(response));
+
 
     /**
-     * If Shop Could Not be Found
+     * If Order Could Not be Found
      */
     if (response === null) {
       const returnResponse = {
         success: false,
-        message: 'Shop not found',
+        message: 'Order not found',
       };
       res.locals.errorMessage = JSON.stringify(returnResponse);
       return res.status(404).send(returnResponse);
     }
 
-    /**
-     * Shop Found
-     */
-    const returnData = {
-      success: true,
-      message: `Shop Found`,
-      data: response,
+    // const orderDetails = await response.forEach(async (order) => {
+    //   /**
+    //    * Filter for Order Items in Order
+    //    */
+    //   filter = {
+    //     where: {
+    //       order_id: order.order_id,
+    //     },
+    //   };
+    //   console.log(filter);
+
+    //   const orderItem = await Services.OrderItemService.getOrderItems(filter);
+
+    //   /**
+    //    * Filter for Item
+    //    */
+    //   // filter = {
+    //   //   where: {
+    //   //     inventory_id: orderItem.item_id,
+    //   //     shop_id: order.shop_id,
+    //   //   },
+    //   // };
+    //   // const itemDetails = await Services.InventoryService.getInventory(filter);
+    //   console.log(orderItem);
+
+    // });
+
+    orderDetails = {
+      order_group_id: req.params.id,
+      orderDetails
     };
-    res.locals.errorMessage = JSON.stringify(returnData);
 
     return res.status(200).send(returnData);
   } catch (error) {
@@ -128,7 +185,7 @@ const getShopByIdAction = async (req, res) => {
      */
     const response = {
       success: false,
-      message: 'An error Occured while retrieving Shop',
+      message: 'An error Occured while retrieving Order',
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
@@ -339,56 +396,52 @@ const createOrderAction = async (req, res) => {
     /**
      * Start Transaction
      */
-    const transaction = await DATABASE.transaction();
+    const t = await DATABASE.transaction();
 
     validation.data.forEach(async (order) => {
       const { orderData, shopItems } = order;
 
-      console.log(orderData, '347');
       /**
        * Create Order
        */
-      await Services.OrderService.createOrder(orderData, transaction);
+      await Services.OrderService.createOrder(orderData, t);
 
       /**
        * Create Order Items
        */
-      // await Promise.all(
-        await
-        shopItems.forEach(async (shopItem) => {
-          /**
-           * Skip if false
-           */
-          if (shopItem === false) {
-            return;
+      await shopItems.forEach(async (shopItem) => {
+        /**
+         * Skip if false
+         */
+        if (shopItem === false) {
+          return;
+        }
+
+        await Services.OrderItemService.createOrderItem(
+          shopItem.orderItemData,
+          t
+        );
+
+        const inventoryId = shopItem.inventoryData.inventory_id;
+        delete shopItem.inventoryData.inventory_id;
+
+        /**
+         * Update Inventory
+         */
+        await Services.InventoryService.updateInventory(
+          shopItem.inventoryData,
+          {
+            where: { inventory_id: inventoryId },
+            t,
           }
-
-          await Services.OrderItemService.createOrderItem(
-            shopItem.orderItemData,
-            transaction
-          );
-
-          const inventoryId = shopItem.inventoryData.inventory_id;
-          delete shopItem.inventoryData.inventory_id;
-
-          /**
-           * Update Inventory
-           */
-          await Services.InventoryService.updateInventory(
-            shopItem.inventoryData,
-            {
-              transaction,
-              where: { inventory_id: inventoryId },
-            }
-          );
-        });
-      // );
+        );
+      });
     });
 
     /**
      * Commiting Transaction
      */
-    await transaction.commit();
+    await t.commit();
 
     const returnData = {
       success: true,
@@ -401,7 +454,7 @@ const createOrderAction = async (req, res) => {
     /**
      * Rolling Back Transaction
      */
-    await transaction.rollback();
+    await t.rollback();
 
     /**
      * Error Occured
@@ -418,7 +471,7 @@ const createOrderAction = async (req, res) => {
 };
 
 export default {
-  // getShopsAction,
+  getOrdersAction,
   createOrderAction,
-  // getShopByIdAction,
+  getOrderByIdAction,
 };
