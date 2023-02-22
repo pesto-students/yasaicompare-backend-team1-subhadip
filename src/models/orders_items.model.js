@@ -22,6 +22,12 @@ const OrderItemsModel = DATABASE.define(
       allowNull: false,
       defaultValue: 0.0,
     },
+    quantity: {
+      type: Sequelize.BIGINT,
+      allowNull: false,
+      uniqueKey: false,
+      defaultValue: 1,
+    },
     fulfilled: {
       type: Sequelize.BOOLEAN,
       allowNull: false,
