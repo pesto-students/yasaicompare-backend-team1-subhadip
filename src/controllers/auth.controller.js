@@ -1,32 +1,5 @@
-import querystring from 'querystring';
 import Services from '../services';
 import Helpers from '../utils/helpers';
-
-/**
- * Login Validator
- * @param {object} req
- * @returns object
- */
-const loginValidator = (req) => {
-  /**
-   * Return Response
-   */
-  const response = { success: false };
-
-  if (
-    !Object.prototype.hasOwnProperty.call(req.body, 'email') ||
-    !Object.prototype.hasOwnProperty.call(req.body, 'password') ||
-    req.body.email === null ||
-    req.body.email === '' ||
-    req.body.password === null ||
-    req.body.password === ''
-  ) {
-    response.message = 'Email/Password is Required';
-    return response;
-  }
-
-  return { success: true };
-};
 
 /**
  * Login Controller
@@ -35,49 +8,70 @@ const loginValidator = (req) => {
  * @returns
  */
 const loginAction = async (req, res) => {
-  /**
-   * Request Validation
-   */
-  const validationResponse = loginValidator(req);
-  if (!validationResponse.success) {
-    res.locals.errorMessage = JSON.stringify(validationResponse);
-    return res.status(400).send(validationResponse);
-  }
+  let user = null;
 
-  /**
-   * Login User
-   */
   try {
     /**
-     * Escape Email and Password
+     * Logging in via Cookie/Refresh-Token
      */
-    req.body.email = querystring.escape(req.body.email);
-    req.body.email = req.body.email.replace('%40', '@');
-    req.body.email = req.body.email.replace('%2B', '+');
+    if (req.cookies?.yasaiLongLivedToken) {
+      /**
+       * Get User by ID
+       */
+      user = await Services.UserService.getUserById(req.body.user_id);
+    } else {
+      /**
+       * Logging in using email & password
+       */
+      const { email, password } = req.body;
+      user = await Services.UserService.loginUser(email, password);
+    }
 
-    const response = await Services.UserService.loginUser(
-      req.body.email,
-      querystring.escape(req.body.password)
-    );
     /**
      * If User Could Not be Found
      */
-    if (response === null) {
-      const returnResponse = {
+    if (user === null) {
+      return res.status(404).send({
         success: false,
         message: 'User not found',
-      };
-      res.locals.errorMessage = JSON.stringify(returnResponse);
-      return res.status(404).send(returnResponse);
+      });
     }
+
     /**
-     * Creating Token
+     * If logging in via refresh Token
      */
-    const jwtData = {
-      user_id: response.user_id,
-      role: response.role,
+    if (req.cookies?.yasaiLongLivedToken) {
+      const userUpdatedAt =
+        new Date(Date.parse(user.updatedAt)).getTime() / 1000;
+
+      if (userUpdatedAt >= req.body.iat) {
+        return res.status(401).send({
+          success: false,
+          message: 'Refresh Token Expired',
+          data: req.body,
+        });
+      }
+    }
+
+    /**
+     * Creating Access Token
+     */
+    let jwtData = {
+      user_id: user.user_id,
+      role: user.role,
+      grant_type: 'client_credentials',
     };
-    const token = Helpers.JWT.createJWTToken(jwtData, '3600s');
+    const accessToken = Helpers.JWT.createJWTToken(jwtData, '3600s');
+
+    /**
+     * Creating Refresh Token
+     */
+    jwtData = {
+      user_id: user.user_id,
+      grant_type: 'refresh_token',
+    };
+    const refreshToken = Helpers.JWT.createJWTToken(jwtData, '30d');
+
     /**
      * User Found
      */
@@ -85,57 +79,22 @@ const loginAction = async (req, res) => {
       success: true,
       message: `User Successfully Logged In`,
       data: {
-        token,
+        accessToken,
       },
     };
-    res.locals.errorMessage = JSON.stringify(returnData);
+
+    res.cookie('yasaiLongLivedToken', refreshToken);
     return res.status(200).send(returnData);
   } catch (error) {
     /**
      * Error Occured
      */
-    const response = {
+    return res.status(500).send({
       success: false,
       message: 'An error Occured while retrieving User',
       data: error,
-    };
-    res.locals.errorMessage = JSON.stringify(response);
-    return res.status(500).send(response);
+    });
   }
-};
-
-/**
- * Register Validator
- * @param {object} req
- * @returns object
- */
-const registerValidator = (req) => {
-  /**
-   * Return Response
-   */
-  const response = { success: false };
-
-  if (
-    !Object.prototype.hasOwnProperty.call(req.body, 'email') ||
-    !Object.prototype.hasOwnProperty.call(req.body, 'password') ||
-    req.body.email === null ||
-    req.body.email === '' ||
-    req.body.password === null ||
-    req.body.password === ''
-  ) {
-    response.message = 'Email/Password is Required';
-    return response;
-  }
-
-  if (
-    !Object.prototype.hasOwnProperty.call(req.body, 'name') ||
-    req.body.name === null ||
-    req.body.name === ''
-  ) {
-    response.message = 'Name is Required';
-    return response;
-  }
-  return { success: true };
 };
 
 /**
@@ -145,30 +104,13 @@ const registerValidator = (req) => {
  * @returns object
  */
 const registerAction = async (req, res) => {
-  /**
-   * Request Validation
-   */
-  const validationResponse = registerValidator(req);
-  if (!validationResponse.success) {
-    res.locals.errorMessage = JSON.stringify(validationResponse);
-    return res.status(400).send(validationResponse);
-  }
+  const user = req.body;
 
-  const name = req.body.name.split(' ');
+  const name = user.name.split(' ');
+  delete user.name;
 
-  const user = {
-    email: querystring.escape(req.body.email),
-    password: querystring.escape(req.body.password),
-    last_name: querystring.escape(name.pop()),
-    first_name: querystring.escape(name.join(' ')),
-  };
-  user.email = user.email.replace('%40', '@');
-  user.email = user.email.replace('%2B', '+');
-  user.first_name = user.first_name.replace('%20', ' ');
-
-  if (Object.prototype.hasOwnProperty.call(req.body, 'contact')) {
-    user.contact_no = querystring.escape(req.body.contact);
-  }
+  user.first_name = name.join(' ');
+  user.last_name = name.pop();
 
   try {
     const response = await Services.UserService.createUser(user);
