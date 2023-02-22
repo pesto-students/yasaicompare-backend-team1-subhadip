@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "debian-sys-maint",
+    "password": "BXY5iDDPqafwn4Zx",
+    "database": "yasai",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "admin",
+    "password": "rootpassword",
+    "database": "yasai-test",
+    "host": "yasai-test.c8qr1hnjmbof.ap-south-1.rds.amazonaws.com",
+    "dialect": "mysql"
+  },
+  "anugrahDev": {
+    "username": "admin",
+    "password": "rootpassword",
+    "database": "yasai-private",
+    "host": "yasai-local-anugrah.c8qr1hnjmbof.ap-south-1.rds.amazonaws.com",
+    "dialect": "mysql"
+  }
+}
