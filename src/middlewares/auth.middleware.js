@@ -43,7 +43,7 @@ const fetchUser = async (jwt) => {
   };
 };
 
-const auth =
+const authorize =
   (...accessRights) =>
   async (req, res, next) => {
     const response = {
@@ -77,6 +77,20 @@ const auth =
     }
   };
 
+const authenticate = async () => {
+  const token = Helper.Validator.headerValidator(req);
+  if (!token) {
+    response.message = 'Required Authorization Token';
+    return res.status(401).send(response);
+  }
+
+  const jwtDecoded = await Helper.JWT.decodeJWTToken(token);
+  if (!jwtDecoded.success) {
+    return res.status(401).send(jwtDecoded);
+  }
+};
+
 export default {
-  auth,
+  authorize,
+  authenticate,
 };
