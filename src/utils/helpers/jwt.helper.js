@@ -20,7 +20,7 @@ const decodeJWTToken = async (token) => {
   return jwt.verify(token, JWT_SECRET_KEY, (error, decoded) => {
     if (error) {
       response.success = false;
-      response.message = 'token expired';
+      response.error = 'token expired';
       response.data = {
         expiredAt: error.expiredAt,
       };
