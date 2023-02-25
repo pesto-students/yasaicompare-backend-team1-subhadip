@@ -6,6 +6,7 @@ import Helpers from '../../utils/helpers';
  * @param {object} req
  * @returns object
  */
+// eslint-disable-next-line consistent-return
 const loginValidator = async (req, res, next) => {
   /**
    * Login Schema
@@ -43,6 +44,7 @@ const loginValidator = async (req, res, next) => {
  * Refresh Validator
  * @param {object} req
  */
+// eslint-disable-next-line consistent-return
 const refreshValidator = async (req, res, next) => {
   /**
    * If Refresh Token isn't in the Request
@@ -72,6 +74,7 @@ const refreshValidator = async (req, res, next) => {
  * Register Validator
  * @param {object} req
  */
+// eslint-disable-next-line consistent-return
 const registerValidator = (req, res, next) => {
   /**
    * Register Schema

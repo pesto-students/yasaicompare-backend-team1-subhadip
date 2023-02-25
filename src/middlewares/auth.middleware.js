@@ -69,6 +69,7 @@ const authorize =
     }
   };
 
+// eslint-disable-next-line consistent-return
 const authenticate = async (req, res, next) => {
   const token = Helper.Validator.headerValidator(req);
   if (!token) {
