@@ -57,4 +57,5 @@ AuthRouter.options('*', (req, res) => {
 AuthRouter.trace('*', (req, res) => {
   res.status(404).send(errorMessage);
 });
+
 export default AuthRouter;
