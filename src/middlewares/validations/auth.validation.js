@@ -7,64 +7,70 @@ import Helpers from '../../utils/helpers';
  * @returns object
  */
 const loginValidator = async (req, res, next) => {
-  if (req.cookies?.yasaiLongLivedToken) {
+  /**
+   * Login Schema
+   */
+  const schema = Joi.object({
+    email: Joi.string()
+      .email({ tlds: { allow: false } })
+      .min(5)
+      .max(100)
+      .required(),
+    password: Joi.string().alphanum().min(3).max(255).required(),
+  });
+
+  const isValid = schema.validate(req.body);
+
+  /**
+   * Schema is Valid
+   */
+  if (!isValid?.error) {
+    /**
+     * Updated Body Params as Required
+     */
+    req.body = isValid.value;
+
+    next();
+  } else {
+    return res.status(400).send({
+      success: false,
+      message: isValid.error.details[0].message,
+    });
+  }
+};
+
+/**
+ * Refresh Validator
+ * @param {object} req
+ */
+const refreshValidator = async (req, res, next) => {
+  /**
+   * If Refresh Token isn't in the Request
+   */
+  if (req.cookies?.refreshToken) {
     const tokenData = await Helpers.JWT.decodeJWTToken(
-      req.cookies.yasaiLongLivedToken
+      req.cookies.refreshToken
     );
 
     if (!tokenData.success) {
       return res.status(401).send({
-        success: false,
-        message: 'Refresh Token Expired',
-        data: tokenData,
+        error: 'Refresh Token Expired',
+        data: tokenData.data,
       });
     }
 
     req.body = tokenData.data;
     next();
   } else {
-    /**
-     * Login Schema
-     */
-    const schema = Joi.object({
-      email: Joi.string()
-        .email({ tlds: { allow: false } })
-        .min(5)
-        .max(100)
-        .required(),
-      password: Joi.string().alphanum().min(3).max(255).required(),
+    return res.status(400).send({
+      error: 'Missing Refresh Token',
     });
-
-    try {
-      const isValid = schema.validate(req.body);
-
-      if (isValid?.error) {
-        return res.status(400).send({
-          success: false,
-          message: isValid.error.details[0].message,
-        });
-      }
-
-      /**
-       * Updated Body Params as Required
-       */
-      req.body = isValid.value;
-
-      next();
-    } catch (error) {
-      return res.status(500).send({
-        success: false,
-        message: `An Error Occured`,
-        error,
-      });
-    }
   }
 };
 
 /**
  * Register Validator
  * @param {object} req
- * @returns object
  */
 const registerValidator = (req, res, next) => {
   /**
@@ -82,27 +88,21 @@ const registerValidator = (req, res, next) => {
     role: Joi.string().default('customer'),
   });
 
-  try {
-    const isValid = schema.validate(req.body);
+  const isValid = schema.validate(req.body);
 
-    if (isValid?.error) {
-      return res.status(400).send({
-        success: false,
-        message: isValid.error.details[0].message,
-      });
-    }
-
+  /**
+   * If Request is valid
+   */
+  if (!isValid?.error) {
     /**
-     * Updated Body Params as Required
+     * Update Body Params as Required
      */
     req.body = isValid.value;
-
     next();
-  } catch (error) {
-    return res.status(500).send({
+  } else {
+    return res.status(400).send({
       success: false,
-      message: `An Error Occured`,
-      error,
+      message: isValid.error.details[0].message,
     });
   }
 };
@@ -110,4 +110,5 @@ const registerValidator = (req, res, next) => {
 export default {
   loginValidator,
   registerValidator,
+  refreshValidator,
 };

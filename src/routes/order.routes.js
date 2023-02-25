@@ -3,7 +3,6 @@ import Controllers from '../controllers';
 import Middleware from '../middlewares';
 
 const OrderRouter = express.Router();
-const AuthMiddleware = Middleware.authMiddleware;
 
 /**
  * 
@@ -13,20 +12,12 @@ const AuthMiddleware = Middleware.authMiddleware;
 /**
  * Get All the Orders of Customer
  */
-OrderRouter.get(
-  '/',
-  AuthMiddleware.auth('get_orders'),
-  Controllers.OrderController.getOrdersAction
-);
+OrderRouter.get('/', Controllers.OrderController.getOrdersAction);
 
 /**
  * Get Order By Id
  */
-OrderRouter.get(
-  '/:id',
-  AuthMiddleware.auth('get_orders'),
-  Controllers.OrderController.getOrderByIdAction
-);
+OrderRouter.get('/:id', Controllers.OrderController.getOrderByIdAction);
 
 /**
  * 
@@ -36,10 +27,6 @@ OrderRouter.get(
 /**
  * Create An Order
  */
-OrderRouter.post(
-  '/create',
-  AuthMiddleware.auth('create_order'),
-  Controllers.OrderController.createOrderAction
-);
+OrderRouter.post('/create', Controllers.OrderController.createOrderAction);
 
 export default OrderRouter;

@@ -24,14 +24,6 @@ const checkRoleAccess = (req, res, next, accessRights, user) => {
 };
 
 const fetchUser = async (jwt) => {
-  if (!Object.keys(jwt).length) {
-    return false;
-  }
-
-  if (!Object.prototype.hasOwnProperty.call(jwt.data, 'user_id')) {
-    return false;
-  }
-
   const getUser = await UserService.getUserById(jwt.data.user_id);
   if (getUser === null) {
     return false;
@@ -77,17 +69,18 @@ const authorize =
     }
   };
 
-const authenticate = async () => {
+const authenticate = async (req, res, next) => {
   const token = Helper.Validator.headerValidator(req);
   if (!token) {
-    response.message = 'Required Authorization Token';
-    return res.status(401).send(response);
+    return res.status(401).send({ message: 'Required Authorization Token' });
   }
 
   const jwtDecoded = await Helper.JWT.decodeJWTToken(token);
   if (!jwtDecoded.success) {
     return res.status(401).send(jwtDecoded);
   }
+
+  next();
 };
 
 export default {

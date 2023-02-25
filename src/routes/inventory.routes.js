@@ -3,7 +3,6 @@ import Controllers from '../controllers';
 import Middleware from '../middlewares';
 
 const InventoryRouter = express.Router();
-const AuthMiddleware = Middleware.authMiddleware;
 
 /**
  * 
@@ -13,18 +12,13 @@ const AuthMiddleware = Middleware.authMiddleware;
 /**
  * Get All the Inventory of Shop
  */
-InventoryRouter.get(
-  '/',
-  AuthMiddleware.auth('get_inventory'),
-  Controllers.InventoryController.getAllInventoryAction
-);
+InventoryRouter.get('/', Controllers.InventoryController.getAllInventoryAction);
 
 /**
  * Get Shop By Id
  */
 InventoryRouter.get(
   '/:shop_id',
-  AuthMiddleware.auth('get_inventory'),
   Controllers.InventoryController.getInventoryByIdAction
 );
 
@@ -38,7 +32,6 @@ InventoryRouter.get(
  */
 InventoryRouter.post(
   '/create',
-  AuthMiddleware.auth('create_inventory'),
   Controllers.InventoryController.createInventoryAction
 );
 

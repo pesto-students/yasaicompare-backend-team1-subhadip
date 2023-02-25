@@ -13,20 +13,12 @@ const AuthMiddleware = Middleware.authMiddleware;
 /**
  * Get All the Shops of the Vendor
  */
-ShopsRouter.get(
-  '/',
-  AuthMiddleware.auth('get_shops'),
-  Controllers.ShopsController.getShopsAction
-);
+ShopsRouter.get('/', Controllers.ShopsController.getShopsAction);
 
 /**
  * Get Shop By Id
  */
-ShopsRouter.get(
-  '/:id',
-  AuthMiddleware.auth('get_shops'),
-  Controllers.ShopsController.getShopByIdAction
-);
+ShopsRouter.get('/:id', Controllers.ShopsController.getShopByIdAction);
 
 /**
  * 
@@ -36,10 +28,6 @@ ShopsRouter.get(
 /**
  * Register A Shop Vendor
  */
-ShopsRouter.post(
-  '/create',
-  AuthMiddleware.auth('create_shop'),
-  Controllers.ShopsController.createShopAction
-);
+ShopsRouter.post('/create', Controllers.ShopsController.createShopAction);
 
 export default ShopsRouter;
