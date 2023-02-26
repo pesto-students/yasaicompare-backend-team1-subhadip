@@ -16,7 +16,7 @@ const createUser = (data) => UserModel.create(data);
 
 /**
  * Get User By Email
- * @param { string } id
+ * @param { string } email
  * @returns object
  */
 const getUserByEmail = (email) =>
