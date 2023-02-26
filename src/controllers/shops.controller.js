@@ -1,21 +1,17 @@
 import Services from '../services';
-import Helpers from '../utils/helpers';
 
+/**
+ * Get All Shops for vendot
+ * @param {object} req
+ * @param {object} res
+ * @returns object
+ */
 const getShopsAction = async (req, res) => {
-  /**
-   * JWT Token Decoded
-   */
-  const tokenData = await Helpers.JWT.decodeJWTToken(
-    Helpers.Validator.headerValidator(req)
-  );
-
   /**
    * Filter Data
    */
   const filter = {
-    where: {
-      owner_id: tokenData.data.user_id,
-    },
+    where: req.body,
     attributes: [
       'shop_id',
       'name',
@@ -24,14 +20,6 @@ const getShopsAction = async (req, res) => {
       'active',
     ],
   };
-
-  /**
-   * If Status Check Set
-   */
-  if (Object.prototype.hasOwnProperty.call(req.query, 'active')) {
-    filter.where.active =
-      req.query.active === true || req.query.active === 'true';
-  }
 
   try {
     /**
@@ -44,10 +32,8 @@ const getShopsAction = async (req, res) => {
      */
     if (shops === null) {
       const returnResponse = {
-        success: false,
-        message: 'Shop(s) not found',
+        error: 'Shop(s) not found',
       };
-      res.locals.errorMessage = JSON.stringify(returnResponse);
       return res.status(404).send(returnResponse);
     }
 
@@ -55,11 +41,8 @@ const getShopsAction = async (req, res) => {
      * Shops Found
      */
     const returnData = {
-      success: true,
-      message: `Shop(s) Found`,
-      data: shops,
+      shops,
     };
-    res.locals.errorMessage = JSON.stringify(returnData);
 
     return res.status(200).send(returnData);
   } catch (error) {
@@ -67,8 +50,7 @@ const getShopsAction = async (req, res) => {
      * Error Occured
      */
     const response = {
-      success: false,
-      message: 'An error Occured while retrieving Shop(s)',
+      error: 'An error Occured while retrieving Shop(s)',
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
@@ -84,31 +66,24 @@ const getShopsAction = async (req, res) => {
  * @returns object
  */
 const getShopByIdAction = async (req, res) => {
-
+  const { id } = req.params;
   try {
-    const response = await Services.ShopsService.getShopById(req.params.id);
+    const response = await Services.ShopsService.getShopById(id);
 
     /**
      * If Shop Could Not be Found
      */
     if (response === null) {
       const returnResponse = {
-        success: false,
-        message: 'Shop not found',
+        error: 'Shop not found',
       };
-      res.locals.errorMessage = JSON.stringify(returnResponse);
       return res.status(404).send(returnResponse);
     }
 
     /**
      * Shop Found
      */
-    const returnData = {
-      success: true,
-      message: `Shop Found`,
-      data: response,
-    };
-    res.locals.errorMessage = JSON.stringify(returnData);
+    const returnData = response;
 
     return res.status(200).send(returnData);
   } catch (error) {
@@ -116,8 +91,7 @@ const getShopByIdAction = async (req, res) => {
      * Error Occured
      */
     const response = {
-      success: false,
-      message: 'An error Occured while retrieving Shop',
+      error: 'An error Occured while retrieving Shop',
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
@@ -144,12 +118,10 @@ const registerShopAction = async (req, res) => {
     /**
      * If Shop Could Not be created
      */
-    const returnResponse = {
-      success: false,
-      message: 'Shop Could not be created',
-    };
-    res.locals.errorMessage = JSON.stringify(returnResponse);
     if (response === null) {
+      const returnResponse = {
+        error: 'Shop Could not be created',
+      };
       return res.status(500).send(returnResponse);
     }
 
@@ -157,11 +129,9 @@ const registerShopAction = async (req, res) => {
      * Shop Created Successfully
      */
     const returnData = {
-      success: true,
       message: 'Shop Created Successfully',
       data: response,
     };
-    res.locals.errorMessage = JSON.stringify(returnData);
 
     return res.status(201).send(returnData);
   } catch (error) {
@@ -169,11 +139,56 @@ const registerShopAction = async (req, res) => {
      * Error Occured
      */
     const response = {
-      success: false,
-      message: 'An error Occured while creating Shop',
+      error: 'An error Occured while creating Shop',
       data: error,
     };
-    res.locals.errorMessage = JSON.stringify(response);
+
+    return res.status(502).send(response);
+  }
+};
+
+/**
+ * Update shop
+ * @param {object} req
+ * @param {object} res
+ * @returns object
+ */
+const updateShopAction = async (req, res) => {
+  /**
+   * Destructuring Body
+   */
+  const { body, filter } = req.body;
+
+  try {
+    const response = await Services.ShopsService.updateShopById(body, filter);
+
+    /**
+     * If Shop Could Not be created
+     */
+    if (response === null) {
+      const returnResponse = {
+        error: 'Shop Could not be updated',
+      };
+      return res.status(500).send(returnResponse);
+    }
+
+    /**
+     * Shop Created Successfully
+     */
+    const returnData = {
+      message: 'Shop updated Successfully',
+      data: response,
+    };
+
+    return res.status(201).send(returnData);
+  } catch (error) {
+    /**
+     * Error Occured
+     */
+    const response = {
+      error: 'An error Occured while updating Shop',
+      data: error,
+    };
 
     return res.status(502).send(response);
   }
@@ -183,4 +198,5 @@ export default {
   getShopsAction,
   registerShopAction,
   getShopByIdAction,
+  updateShopAction,
 };

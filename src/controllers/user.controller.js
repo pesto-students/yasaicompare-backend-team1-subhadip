@@ -14,40 +14,33 @@ const getUsers = async (req, res) => {
  * @param {object} res
  * @returns object
  */
+// eslint-disable-next-line consistent-return
 const getUserById = async (req, res) => {
-  if (!Object.prototype.hasOwnProperty.call(req.params, 'id')) {
-    res.status(400).send({ success: false, message: 'Id is Required' });
-    return;
-  }
+  const { userId } = req.body;
 
   try {
-    const response = await Services.UserService.getUserById(req.params.id);
+    const response = await Services.UserService.getUserById(userId);
     /**
      * If User Could Not be Found
      */
     if (response === null) {
-      res.status(404).send({
-        success: false,
-        message: 'User not found',
+      return res.status(404).send({
+        error: 'User not found',
       });
-      return;
     }
+
     /**
      * User Found
      */
-    res.status(200).send({
-      success: true,
-      message: `User Found`,
+    return res.status(200).send({
       data: response,
     });
-    return;
   } catch (error) {
     /**
      * Error Occured
      */
     res.status(500).send({
-      success: false,
-      message: 'An error Occured while retrieving User',
+      error: 'An error Occured while retrieving User',
       data: error,
     });
   }

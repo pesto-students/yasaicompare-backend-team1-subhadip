@@ -15,7 +15,7 @@ const getShopsValidator = async (req, res, next) => {
     active: Joi.boolean().default(true),
   });
 
-  const isValid = schema.validate(req.body);
+  const isValid = schema.validate(req.query);
   const jwtDecoded = await Helpers.JWT.decodeJWTToken(
     Helpers.Validator.headerValidator(req)
   );
@@ -27,14 +27,15 @@ const getShopsValidator = async (req, res, next) => {
     /**
      * Updated Body Params as Required
      */
-    req.body = isValid.value;
-    req.body.owner_id = jwtDecoded.data.user_id;
+    const filter = isValid.value;
+    filter.owner_id = jwtDecoded.data.user_id;
+
+    req.body = filter;
 
     next();
   } else {
     return res.status(400).send({
-      success: false,
-      message: isValid.error.details[0].message,
+      error: isValid.error.details[0].message,
     });
   }
 };
@@ -58,10 +59,7 @@ const getShopValidator = async (req, res, next) => {
    * If Request is valid
    */
   if (!isValid?.error) {
-    /**
-     * Update Body Params as Required
-     */
-    req.body = isValid.value;
+    // Proceed to Route
     next();
   } else {
     return res.status(400).send({
@@ -116,8 +114,69 @@ const registerShopValidator = async (req, res, next) => {
   }
 };
 
+/**
+ * Update Shop Validator
+ * @param {object} req
+ */
+// eslint-disable-next-line consistent-return
+const updateShopValidator = async (req, res, next) => {
+  /**
+   * Shop Id Missing
+   */
+  const paramSchema = Joi.object({
+    id: Joi.string().alphanum().min(3).max(255).required(),
+  });
+  const isValidParam = paramSchema.validate(req.params);
+
+  /**
+   * Shop Schema
+   */
+  const bodySchema = Joi.object({
+    name: Joi.string().min(3).max(255),
+    address: Joi.string().min(3).max(100),
+    city: Joi.string().min(3).max(100),
+    state: Joi.string().min(3).max(100),
+    pincode: Joi.string().min(5).max(8),
+    country: Joi.string().min(2).max(10),
+    gstin: Joi.string().min(2).max(30),
+    home_delievery_cost: Joi.number().precision(4).default(3.52),
+    home_delievery_distance: Joi.number().integer().default(1),
+    active: Joi.boolean().default(true),
+  });
+  const isValid = bodySchema.validate(req.body);
+
+  /**
+   * If Request is valid
+   */
+  if (!isValid?.error && !isValidParam?.error) {
+    /**
+     * Update Body Params as Required
+     */
+    const jwtDecoded = await Helpers.JWT.decodeJWTToken(
+      Helpers.Validator.headerValidator(req)
+    );
+
+    const filter = {
+      filter: {
+        owner_id: jwtDecoded.data.user_id,
+        shop_id: isValidParam.value,
+      },
+      body: isValid.value,
+    };
+    req.body = filter;
+
+    next();
+  } else {
+    return res.status(400).send({
+      success: false,
+      message: isValid.error.details[0].message,
+    });
+  }
+};
+
 export default {
   getShopsValidator,
   registerShopValidator,
   getShopValidator,
+  updateShopValidator,
 };

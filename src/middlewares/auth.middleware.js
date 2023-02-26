@@ -23,8 +23,8 @@ const checkRoleAccess = (req, res, next, accessRights, user) => {
   return false;
 };
 
-const fetchUser = async (jwt) => {
-  const getUser = await UserService.getUserById(jwt.data.user_id);
+const fetchUser = async (userId) => {
+  const getUser = await UserService.getUserById(userId);
   if (getUser === null) {
     return false;
   }
@@ -38,22 +38,15 @@ const fetchUser = async (jwt) => {
 const authorize =
   (...accessRights) =>
   async (req, res, next) => {
-    const token = Helper.Validator.headerValidator(req);
-    if (!token) {
-      res.status(401).send({
-        error: 'Required Authorization Token',
+    const { userId } = req.body;
+    const user = await fetchUser(userId);
+
+    if (!user) {
+      res.status(400).send({
+        error: 'Access Forbidden',
       });
-      return;
     }
 
-    const jwtDecoded = await Helper.JWT.decodeJWTToken(token);
-    if (!jwtDecoded.success) {
-      res.locals.errorMessage = JSON.stringify(jwtDecoded);
-      res.status(401).send(jwtDecoded);
-      return;
-    }
-
-    const user = await fetchUser(jwtDecoded);
     const isAllowed = checkRoleAccess(req, res, next, accessRights, user);
 
     if (isAllowed) {
@@ -80,6 +73,10 @@ const authenticate = async (req, res, next) => {
     });
   }
 
+  /**
+   * Adding user_id in Request for Authorization
+   */
+  req.body.userId = jwtDecoded.data.user_id;
   next();
 };
 
