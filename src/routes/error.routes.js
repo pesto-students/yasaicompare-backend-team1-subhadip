@@ -1,23 +1,40 @@
 import express from 'express';
 
 const ErrorRouter = express.Router();
-const errorMessage = { success: false, message: 'Access Forbidden' };
+const errorMessage = { message: 'Access Forbidden' };
 
 /**
- * 
-    ============================ GET METHODS ======================================
+ * Error Routes
  */
-
 ErrorRouter.get('*', (req, res) => {
   res.status(404).send(errorMessage);
 });
 
-/**
- * 
-    ============================ POST METHODS ======================================
- */
+ErrorRouter.head('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
 
 ErrorRouter.post('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ErrorRouter.put('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ErrorRouter.delete('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ErrorRouter.connect('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ErrorRouter.options('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ErrorRouter.trace('*', (req, res) => {
   res.status(404).send(errorMessage);
 });
 

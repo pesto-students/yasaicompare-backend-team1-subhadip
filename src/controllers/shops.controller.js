@@ -30,7 +30,8 @@ const getShopsAction = async (req, res) => {
    * If Status Check Set
    */
   if (Object.prototype.hasOwnProperty.call(req.query, 'active')) {
-    filter.where.active = req.query.active === true || req.query.active === "true";
+    filter.where.active =
+      req.query.active === true || req.query.active === 'true';
   }
 
   try {
@@ -132,111 +133,19 @@ const getShopByIdAction = async (req, res) => {
 };
 
 /**
- * Create / Update Shop Parameter
- * @param {object} request
- * @returns object
- */
-const createUpdateShopParamValidator = async (request) => {
-  /**
-   * ValidationResponse
-   */
-  let response = {
-    success: false,
-  };
-
-  const object = request.body;
-
-  /**
-   * Missing Shop Name
-   */
-  if (!Object.prototype.hasOwnProperty.call(object, 'name')) {
-    response.message = 'Shop Name is Required';
-    return response;
-  }
-
-  /**
-   * Missing Address
-   */
-  if (
-    !Object.prototype.hasOwnProperty.call(object, 'address') ||
-    !Object.prototype.hasOwnProperty.call(object, 'city') ||
-    !Object.prototype.hasOwnProperty.call(object, 'state') ||
-    !Object.prototype.hasOwnProperty.call(object, 'pincode') ||
-    !Object.prototype.hasOwnProperty.call(object, 'country')
-  ) {
-    response.message = 'Shop Address is Required';
-    return response;
-  }
-
-  /**
-   * Validating Owner Id
-   */
-  const tokenData = await Helpers.JWT.decodeJWTToken(
-    Helpers.Validator.headerValidator(request)
-  );
-
-  response = {
-    success: true,
-    data: {
-      name: object.name,
-      address: object.address,
-      city: object.city,
-      state: object.state,
-      pincode: object.pincode,
-      country: object.country,
-      owner_id: tokenData.data.user_id,
-    },
-  };
-
-  /**
-   * If Set GSTIN
-   */
-  if (Object.prototype.hasOwnProperty.call(object, 'gstin')) {
-    response.data.home_delievery_cost = object.gstin;
-  }
-
-  /**
-   * If Set home_delievery_cost
-   */
-  if (Object.prototype.hasOwnProperty.call(object, 'home_delievery_cost')) {
-    response.data.home_delievery_cost = object.home_delievery_cost;
-  }
-
-  /**
-   * If Set home_delievery_distance
-   */
-  if (Object.prototype.hasOwnProperty.call(object, 'home_delievery_distance')) {
-    response.data.home_delievery_distance = object.home_delievery_distance;
-  }
-
-  /**
-   * If Set shop_status
-   */
-  if (Object.prototype.hasOwnProperty.call(object, 'active')) {
-    response.data.active = object.active === true || object.active === "true";
-  }
-
-  return response;
-};
-
-/**
  * Create shop
  * @param {object} req
  * @param {object} res
  * @returns object
  */
-const createShopAction = async (req, res) => {
+const registerShopAction = async (req, res) => {
   /**
-   * Params Validation
+   * Destructuring Body
    */
-  const validation = await createUpdateShopParamValidator(req);
-  if (!validation.success) {
-    res.locals.errorMessage = JSON.stringify(validation);
-    return res.status(400).send(validation);
-  }
+  const { body } = req.body;
 
   try {
-    const response = await Services.ShopsService.createShop(validation.data);
+    const response = await Services.ShopsService.createShop(body);
 
     /**
      * If Shop Could Not be created
@@ -278,6 +187,6 @@ const createShopAction = async (req, res) => {
 
 export default {
   getShopsAction,
-  createShopAction,
+  registerShopAction,
   getShopByIdAction,
 };

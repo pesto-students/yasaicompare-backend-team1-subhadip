@@ -2,25 +2,23 @@ import Joi from 'joi';
 import Helpers from '../../utils/helpers';
 
 /**
- * Login Validator
+ * Get Shops Validator for Vendor
  * @param {object} req
  * @returns object
  */
 // eslint-disable-next-line consistent-return
-const loginValidator = async (req, res, next) => {
+const getShopsValidator = async (req, res, next) => {
   /**
-   * Login Schema
+   * Get Shop Schema
    */
   const schema = Joi.object({
-    email: Joi.string()
-      .email({ tlds: { allow: false } })
-      .min(5)
-      .max(100)
-      .required(),
-    password: Joi.string().alphanum().min(3).max(255).required(),
+    active: Joi.boolean().default(true),
   });
 
   const isValid = schema.validate(req.body);
+  const jwtDecoded = await Helpers.JWT.decodeJWTToken(
+    Helpers.Validator.headerValidator(req)
+  );
 
   /**
    * Schema is Valid
@@ -30,11 +28,13 @@ const loginValidator = async (req, res, next) => {
      * Updated Body Params as Required
      */
     req.body = isValid.value;
+    req.body.owner_id = jwtDecoded.data.user_id;
 
     next();
   } else {
     return res.status(400).send({
-      error: isValid.error.details[0].message,
+      success: false,
+      message: isValid.error.details[0].message,
     });
   }
 };
@@ -70,27 +70,31 @@ const refreshValidator = async (req, res, next) => {
 };
 
 /**
- * Register Validator
+ * Register Shop Validator
  * @param {object} req
  */
 // eslint-disable-next-line consistent-return
-const registerValidator = (req, res, next) => {
+const registerShopValidator = async (req, res, next) => {
   /**
    * Register Schema
    */
   const schema = Joi.object({
-    email: Joi.string()
-      .email({ tlds: { allow: false } })
-      .min(5)
-      .max(100)
-      .required(),
-    password: Joi.string().alphanum().min(3).max(255).required(),
     name: Joi.string().min(3).max(255).required(),
-    contact: Joi.string().min(0).max(13).default(''),
-    role: Joi.string().default('customer'),
+    address: Joi.string().min(3).max(100).required(),
+    city: Joi.string().min(3).max(100).required(),
+    state: Joi.string().min(3).max(100).required(),
+    pincode: Joi.string().min(5).max(8).required(),
+    country: Joi.string().min(2).max(10).required(),
+    gstin: Joi.string().min(2).max(30),
+    home_delievery_cost: Joi.number().precision(4).default(3.52),
+    home_delievery_distance: Joi.number().integer().default(1),
+    active: Joi.boolean().default(true),
   });
 
   const isValid = schema.validate(req.body);
+  const jwtDecoded = await Helpers.JWT.decodeJWTToken(
+    Helpers.Validator.headerValidator(req)
+  );
 
   /**
    * If Request is valid
@@ -100,16 +104,19 @@ const registerValidator = (req, res, next) => {
      * Update Body Params as Required
      */
     req.body = isValid.value;
+    req.body.owner_id = jwtDecoded.data.user_id;
+
     next();
   } else {
     return res.status(400).send({
-      error: isValid.error.details[0].message,
+      success: false,
+      message: isValid.error.details[0].message,
     });
   }
 };
 
 export default {
-  loginValidator,
-  registerValidator,
+  getShopsValidator,
+  registerShopValidator,
   refreshValidator,
 };

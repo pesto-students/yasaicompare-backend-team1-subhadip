@@ -27,8 +27,7 @@ const loginAction = async (req, res) => {
      */
     if (user === null) {
       return res.status(404).send({
-        success: false,
-        message: 'User not found',
+        error: 'User not found',
       });
     }
 
@@ -55,7 +54,6 @@ const loginAction = async (req, res) => {
      * User Found
      */
     const returnData = {
-      success: true,
       message: `User Successfully Logged In`,
       data: {
         accessToken,
@@ -69,7 +67,6 @@ const loginAction = async (req, res) => {
      * Error Occured
      */
     return res.status(500).send({
-      success: false,
       message: 'An error Occured while retrieving User',
       data: error,
     });
@@ -103,8 +100,7 @@ const registerAction = async (req, res) => {
      */
     if (response === null) {
       const returnResponse = {
-        success: false,
-        message: 'User Could not be created',
+        error: 'User Could not be created',
       };
       res.locals.errorMessage = JSON.stringify(returnResponse);
       return res.status(500).send(returnResponse);
@@ -113,7 +109,6 @@ const registerAction = async (req, res) => {
      * User Created Successfully
      */
     const returnData = {
-      success: true,
       message: 'User Created Successfully',
       data: response,
     };
@@ -124,8 +119,7 @@ const registerAction = async (req, res) => {
      * Error Occured
      */
     const response = {
-      success: false,
-      message: 'An error Occured while creating user',
+      error: 'An error Occured while creating user',
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
@@ -150,8 +144,7 @@ const refreshTokenAction = async (req, res) => {
      */
     if (user === null) {
       return res.status(404).send({
-        success: false,
-        message: 'User not found',
+        error: 'User not found',
       });
     }
 
@@ -159,8 +152,7 @@ const refreshTokenAction = async (req, res) => {
 
     if (userUpdatedAt >= req.body.iat) {
       return res.status(401).send({
-        success: false,
-        message: 'Refresh Token Expired',
+        error: 'Refresh Token Expired',
         data: req.body,
       });
     }
@@ -188,7 +180,6 @@ const refreshTokenAction = async (req, res) => {
      * User Found
      */
     const returnData = {
-      success: true,
       message: `User Successfully Logged In`,
       data: {
         accessToken,
@@ -202,8 +193,7 @@ const refreshTokenAction = async (req, res) => {
      * Error Occured
      */
     return res.status(500).send({
-      success: false,
-      message: 'An error Occured while retrieving User',
+      error: 'An error Occured while retrieving User',
       data: error,
     });
   }

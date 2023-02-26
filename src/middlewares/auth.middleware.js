@@ -38,15 +38,11 @@ const fetchUser = async (jwt) => {
 const authorize =
   (...accessRights) =>
   async (req, res, next) => {
-    const response = {
-      success: false,
-    };
-
     const token = Helper.Validator.headerValidator(req);
     if (!token) {
-      response.message = 'Required Authorization Token';
-      res.locals.errorMessage = JSON.stringify(response);
-      res.status(401).send(response);
+      res.status(401).send({
+        error: 'Required Authorization Token',
+      });
       return;
     }
 
@@ -63,9 +59,9 @@ const authorize =
     if (isAllowed) {
       next();
     } else {
-      response.message = 'Access Forbidden';
-      res.locals.errorMessage = JSON.stringify(response);
-      res.status(403).send(response);
+      res.status(403).send({
+        error: 'Access Forbidden',
+      });
     }
   };
 
@@ -73,12 +69,15 @@ const authorize =
 const authenticate = async (req, res, next) => {
   const token = Helper.Validator.headerValidator(req);
   if (!token) {
-    return res.status(401).send({ message: 'Required Authorization Token' });
+    return res.status(401).send({ error: 'Required Authorization Token' });
   }
 
   const jwtDecoded = await Helper.JWT.decodeJWTToken(token);
   if (!jwtDecoded.success) {
-    return res.status(401).send(jwtDecoded);
+    return res.status(401).send({
+      error: jwtDecoded.error,
+      data: jwtDecoded.data,
+    });
   }
 
   next();
