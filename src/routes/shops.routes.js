@@ -26,7 +26,11 @@ ShopsRouter.get(
 /**
  * Get Shop By Id
  */
-ShopsRouter.get('/:id', Controllers.ShopsController.getShopByIdAction);
+ShopsRouter.get(
+  '/:id',
+  Validations.shopsValidation.getShopValidator,
+  Controllers.ShopsController.getShopByIdAction
+);
 
 /**
  * 

@@ -45,7 +45,6 @@ const loginAction = async (req, res) => {
     let jwtData = {
       user_id: user.user_id,
       role: user.role,
-      grant_type: 'client_credentials',
     };
     const accessToken = Helpers.JWT.createJWTToken(jwtData, '3600s');
 
@@ -54,7 +53,6 @@ const loginAction = async (req, res) => {
      */
     jwtData = {
       user_id: user.user_id,
-      grant_type: 'refresh_token',
     };
     const refreshToken = Helpers.JWT.createJWTToken(jwtData, '30d');
 
@@ -62,20 +60,17 @@ const loginAction = async (req, res) => {
      * User Found
      */
     const returnData = {
-      message: `User Successfully Logged In`,
-      data: {
-        accessToken,
-      },
+      accessToken,
     };
 
-    res.cookie('refresh-token-yasai', refreshToken);
+    res.cookie('refreshToken', refreshToken);
     return res.status(200).send(returnData);
   } catch (error) {
     /**
      * Error Occured
      */
     return res.status(500).send({
-      message: 'An error Occured while retrieving User',
+      error: 'An error Occured while retrieving User',
       data: error,
     });
   }
@@ -118,9 +113,7 @@ const registerAction = async (req, res) => {
      */
     const returnData = {
       message: 'User Created Successfully',
-      data: response,
     };
-    res.locals.errorMessage = JSON.stringify(returnData);
     return res.status(201).send(returnData);
   } catch (error) {
     /**
@@ -130,7 +123,6 @@ const registerAction = async (req, res) => {
       error: 'An error Occured while creating user',
       data: error,
     };
-    res.locals.errorMessage = JSON.stringify(response);
     return res.status(500).send(response);
   }
 };
@@ -156,22 +148,12 @@ const refreshTokenAction = async (req, res) => {
       });
     }
 
-    const userUpdatedAt = new Date(Date.parse(user.updatedAt)).getTime() / 1000;
-
-    if (userUpdatedAt >= req.body.iat) {
-      return res.status(401).send({
-        error: 'Refresh Token Expired',
-        data: req.body,
-      });
-    }
-
     /**
      * Creating Access Token
      */
     let jwtData = {
       user_id: user.user_id,
       role: user.role,
-      grant_type: 'client_credentials',
     };
     const accessToken = Helpers.JWT.createJWTToken(jwtData, '3600s');
 
@@ -180,7 +162,6 @@ const refreshTokenAction = async (req, res) => {
      */
     jwtData = {
       user_id: user.user_id,
-      grant_type: 'refresh_token',
     };
     const refreshToken = Helpers.JWT.createJWTToken(jwtData, '30d');
 
@@ -188,13 +169,10 @@ const refreshTokenAction = async (req, res) => {
      * User Found
      */
     const returnData = {
-      message: `User Successfully Logged In`,
-      data: {
-        accessToken,
-      },
+      accessToken,
     };
 
-    res.cookie('refresh-token-yasai', refreshToken);
+    res.cookie('refreshToken', refreshToken);
     return res.status(200).send(returnData);
   } catch (error) {
     /**

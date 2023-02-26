@@ -40,31 +40,32 @@ const getShopsValidator = async (req, res, next) => {
 };
 
 /**
- * Refresh Validator
+ * Get Shop Validator
  * @param {object} req
  */
 // eslint-disable-next-line consistent-return
-const refreshValidator = async (req, res, next) => {
+const getShopValidator = async (req, res, next) => {
   /**
-   * If Refresh Token isn't in the Request
+   * Get Shop
    */
-  if (req.cookies?.refreshToken) {
-    const tokenData = await Helpers.JWT.decodeJWTToken(
-      req.cookies.refreshToken
-    );
+  const schema = Joi.object({
+    id: Joi.string().alphanum().min(3).max(255).required(),
+  });
 
-    if (!tokenData.success) {
-      return res.status(401).send({
-        error: 'Refresh Token Expired',
-        data: tokenData.data,
-      });
-    }
+  const isValid = schema.validate(req.params);
 
-    req.body = tokenData.data;
+  /**
+   * If Request is valid
+   */
+  if (!isValid?.error) {
+    /**
+     * Update Body Params as Required
+     */
+    req.body = isValid.value;
     next();
   } else {
     return res.status(400).send({
-      error: 'Missing Refresh Token',
+      error: isValid.error.details[0].message,
     });
   }
 };
@@ -118,5 +119,5 @@ const registerShopValidator = async (req, res, next) => {
 export default {
   getShopsValidator,
   registerShopValidator,
-  refreshValidator,
+  getShopValidator,
 };

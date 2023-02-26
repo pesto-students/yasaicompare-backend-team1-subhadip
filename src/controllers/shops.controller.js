@@ -1,4 +1,3 @@
-// import querystring from 'querystring';
 import Services from '../services';
 import Helpers from '../utils/helpers';
 
@@ -85,11 +84,6 @@ const getShopsAction = async (req, res) => {
  * @returns object
  */
 const getShopByIdAction = async (req, res) => {
-  if (!Object.prototype.hasOwnProperty.call(req.params, 'id')) {
-    const validationResponse = { success: false, message: 'Id is Required' };
-    res.locals.errorMessage = JSON.stringify(validationResponse);
-    return res.status(400).send(validationResponse);
-  }
 
   try {
     const response = await Services.ShopsService.getShopById(req.params.id);
