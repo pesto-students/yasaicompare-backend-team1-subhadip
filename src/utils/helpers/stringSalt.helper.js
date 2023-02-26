@@ -12,6 +12,11 @@ const generateSaltedString = async (string) => {
   }
 };
 
+// const compareString = async (stringFrom, stringTo) => {
+//   // return bcrypt.compareSync(stringFrom, stringTo);
+//   return bcrypt.compareSync(stringTo, stringFrom);
+// };
+
 const compareString = async (stringFrom, stringTo) => {
   return bcrypt.compareSync(stringFrom, stringTo);
 };

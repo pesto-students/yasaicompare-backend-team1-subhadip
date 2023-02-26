@@ -13,14 +13,11 @@ const loginAction = async (req, res) => {
      * Logging in using email & password
      */
     const { email, password } = req.body;
-    const hashedPassword = await Helpers.StringSalt.generateSaltedString(
-      password
-    );
 
     /**
      * Hitting Database
      */
-    const user = await Services.UserService.loginUser(email, hashedPassword);
+    const user = await Services.UserService.getUserByEmail(email);
 
     /**
      * If User Could Not be Found
@@ -28,6 +25,17 @@ const loginAction = async (req, res) => {
     if (user === null) {
       return res.status(404).send({
         error: 'User not found',
+      });
+    }
+
+    const isValid = await Helpers.StringSalt.compareString(
+      password,
+      user.password
+    );
+
+    if (!isValid) {
+      return res.status(400).send({
+        error: 'Email/Password is Incorrect',
       });
     }
 
@@ -66,6 +74,7 @@ const loginAction = async (req, res) => {
     /**
      * Error Occured
      */
+    console.log(error);
     return res.status(500).send({
       message: 'An error Occured while retrieving User',
       data: error,
