@@ -1,5 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import config from './config';
 import Logger from './utils/logger';
@@ -11,6 +12,7 @@ const logger = Logger('app');
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(successHandler);
 app.use(errorHandler);
 

@@ -24,14 +24,6 @@ const checkRoleAccess = (req, res, next, accessRights, user) => {
 };
 
 const fetchUser = async (jwt) => {
-  if (!Object.keys(jwt).length) {
-    return false;
-  }
-
-  if (!Object.prototype.hasOwnProperty.call(jwt.data, 'user_id')) {
-    return false;
-  }
-
   const getUser = await UserService.getUserById(jwt.data.user_id);
   if (getUser === null) {
     return false;
@@ -43,18 +35,14 @@ const fetchUser = async (jwt) => {
   };
 };
 
-const auth =
+const authorize =
   (...accessRights) =>
   async (req, res, next) => {
-    const response = {
-      success: false,
-    };
-
     const token = Helper.Validator.headerValidator(req);
     if (!token) {
-      response.message = 'Required Authorization Token';
-      res.locals.errorMessage = JSON.stringify(response);
-      res.status(401).send(response);
+      res.status(401).send({
+        error: 'Required Authorization Token',
+      });
       return;
     }
 
@@ -71,12 +59,31 @@ const auth =
     if (isAllowed) {
       next();
     } else {
-      response.message = 'Access Forbidden';
-      res.locals.errorMessage = JSON.stringify(response);
-      res.status(403).send(response);
+      res.status(403).send({
+        error: 'Access Forbidden',
+      });
     }
   };
 
+// eslint-disable-next-line consistent-return
+const authenticate = async (req, res, next) => {
+  const token = Helper.Validator.headerValidator(req);
+  if (!token) {
+    return res.status(401).send({ error: 'Required Authorization Token' });
+  }
+
+  const jwtDecoded = await Helper.JWT.decodeJWTToken(token);
+  if (!jwtDecoded.success) {
+    return res.status(401).send({
+      error: jwtDecoded.error,
+      data: jwtDecoded.data,
+    });
+  }
+
+  next();
+};
+
 export default {
-  auth,
+  authorize,
+  authenticate,
 };

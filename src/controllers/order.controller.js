@@ -211,7 +211,6 @@ const getOrderByIdAction = async (req, res) => {
       message: 'An error Occured while retrieving Order',
       data: error,
     };
-    console.log(error);
     res.locals.errorMessage = JSON.stringify(response);
 
     return res.status(500).send(response);
