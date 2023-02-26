@@ -74,7 +74,6 @@ const loginAction = async (req, res) => {
     /**
      * Error Occured
      */
-    console.log(error);
     return res.status(500).send({
       message: 'An error Occured while retrieving User',
       data: error,

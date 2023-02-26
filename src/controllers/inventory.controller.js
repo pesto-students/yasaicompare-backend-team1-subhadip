@@ -153,7 +153,6 @@ const getInventoryByIdAction = async (req, res) => {
     /**
      * Error Occured
      */
-    console.log(error);
     const response = {
       success: false,
       message: 'An error Occured while retrieving Inventory Item',
