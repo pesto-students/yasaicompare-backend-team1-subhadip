@@ -2,12 +2,12 @@ import Joi from 'joi';
 import Helpers from '../../utils/helpers';
 
 /**
- * Get Shops Validator for Vendor
+ * Get Orders Validator for Customer
  * @param {object} req
  * @returns object
  */
 // eslint-disable-next-line consistent-return
-const getShopsValidator = async (req, res, next) => {
+const getOrdersValidator = async (req, res, next) => {
   /**
    * User ID set in Authentication
    */
@@ -18,9 +18,10 @@ const getShopsValidator = async (req, res, next) => {
    * Get Shop Schema
    */
   const querySchema = Joi.object({
-    active: Joi.boolean().default(true),
     page_info: Joi.number().default(0),
     limit: Joi.number().min(1).max(10).default(5),
+    order_status: Joi.string().min(2).max(50),
+    payment_status: Joi.string().min(2).max(50),
   });
 
   const isValidQuery = querySchema.validate(req.query);
@@ -33,7 +34,7 @@ const getShopsValidator = async (req, res, next) => {
      * Updated Body Params as Required
      */
     const filter = isValidQuery.value;
-    filter.owner_id = userId;
+    filter.customer_id = userId;
 
     req.body = filter;
 
@@ -46,16 +47,15 @@ const getShopsValidator = async (req, res, next) => {
 };
 
 /**
- * Get Shop Validator
+ * Get Order Validator
  * @param {object} req
  */
 // eslint-disable-next-line consistent-return
-const getShopValidator = async (req, res, next) => {
+const getOrderValidator = async (req, res, next) => {
   /**
    * User ID set in Authentication
    */
-  // const { userId } = req.body;
-  delete req.body.userId;
+  const { userId } = req.body;
 
   /**
    * Get Shop
@@ -71,6 +71,13 @@ const getShopValidator = async (req, res, next) => {
    */
   if (!isValidParam?.error) {
     // Proceed to Route
+    const filter = {
+      order_group_id: isValidParam.value.id,
+      customer_id: userId,
+    };
+
+    req.body = filter;
+
     next();
   } else {
     return res.status(400).send({
@@ -84,7 +91,7 @@ const getShopValidator = async (req, res, next) => {
  * @param {object} req
  */
 // eslint-disable-next-line consistent-return
-const registerShopValidator = async (req, res, next) => {
+const createOrderValidator = async (req, res, next) => {
   /**
    * User ID set in Authentication
    */
@@ -209,69 +216,9 @@ const updateShopValidator = async (req, res, next) => {
   }
 };
 
-// /**
-//  * Update Shop Validator
-//  * @param {object} req
-//  */
-// // eslint-disable-next-line consistent-return
-// const updateShopValidator = async (req, res, next) => {
-//   /**
-//    * Shop Id Missing
-//    */
-//   const paramSchema = Joi.object({
-//     id: Joi.string().alphanum().min(3).max(255).required(),
-//   });
-//   const isValidParam = paramSchema.validate(req.params);
-
-//   /**
-//    * Shop Schema
-//    */
-//   const bodySchema = Joi.object({
-//     name: Joi.string().min(3).max(255),
-//     address: Joi.string().min(3).max(100),
-//     city: Joi.string().min(3).max(100),
-//     state: Joi.string().min(3).max(100),
-//     pincode: Joi.string().min(5).max(8),
-//     country: Joi.string().min(2).max(10),
-//     gstin: Joi.string().min(2).max(30),
-//     home_delievery_cost: Joi.number().precision(4).default(3.52),
-//     home_delievery_distance: Joi.number().integer().default(1),
-//     active: Joi.boolean().default(true),
-//   });
-//   const isValid = bodySchema.validate(req.body);
-
-//   /**
-//    * If Request is valid
-//    */
-//   if (!isValid?.error && !isValidParam?.error) {
-//     /**
-//      * Update Body Params as Required
-//      */
-//     const jwtDecoded = await Helpers.JWT.decodeJWTToken(
-//       Helpers.Validator.headerValidator(req)
-//     );
-
-//     const filter = {
-//       filter: {
-//         owner_id: jwtDecoded.data.user_id,
-//         shop_id: isValidParam.value,
-//       },
-//       body: isValid.value,
-//     };
-//     req.body = filter;
-
-//     next();
-//   } else {
-//     return res.status(400).send({
-//       success: false,
-//       message: isValid.error.details[0].message,
-//     });
-//   }
-// };
-
 export default {
-  getShopsValidator,
-  registerShopValidator,
-  getShopValidator,
+  getOrdersValidator,
+  createOrderValidator,
+  getOrderValidator,
   updateShopValidator,
 };
