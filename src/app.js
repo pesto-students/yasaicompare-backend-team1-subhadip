@@ -2,6 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import cookieSession from 'cookie-session';
 import config from './config';
 import Logger from './utils/logger';
 import { errorHandler, successHandler } from './middlewares/logger.middleware';
@@ -15,6 +16,7 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(successHandler);
 app.use(errorHandler);
+app.use(cookieSession({ httpOnly: true, secure: true, sameSite: 'none' }));
 
 app.use('/', Routes);
 
