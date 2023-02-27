@@ -33,7 +33,7 @@ const getUserById = async (req, res) => {
      * User Found
      */
     return res.status(200).send({
-      data: response,
+      response,
     });
   } catch (error) {
     /**

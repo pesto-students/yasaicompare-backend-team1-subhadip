@@ -1,7 +1,7 @@
 import Services from '../services';
 
 /**
- * Get All Shops for vendot
+ * Get All Shops (vendor)
  * @param {object} req
  * @param {object} res
  * @returns object
@@ -101,7 +101,7 @@ const getShopByIdAction = async (req, res) => {
 };
 
 /**
- * Create shop
+ * Create shop (vendor)
  * @param {object} req
  * @param {object} res
  * @returns object
@@ -148,7 +148,7 @@ const registerShopAction = async (req, res) => {
 };
 
 /**
- * Update shop
+ * Update shop (vendor)
  * @param {object} req
  * @param {object} res
  * @returns object

@@ -63,7 +63,13 @@ const loginAction = async (req, res) => {
       accessToken,
     };
 
-    res.cookie('refreshToken', refreshToken);
+    const options = {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    };
+
+    res.cookie('refreshToken', refreshToken, options);
     return res.status(200).send(returnData);
   } catch (error) {
     /**
