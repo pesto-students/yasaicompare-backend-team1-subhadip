@@ -14,7 +14,6 @@ const getUsers = async (req, res) => {
  * @param {object} res
  * @returns object
  */
-// eslint-disable-next-line consistent-return
 const getUserById = async (req, res) => {
   const { userId } = req.body;
 
