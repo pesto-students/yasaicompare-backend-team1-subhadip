@@ -92,7 +92,6 @@ const createInventoryValidator = async (req, res, next) => {
    * Create Schema
    */
   const bodySchema = Joi.object({
-    shop_id: Joi.string().min(3).max(255).required(),
     name: Joi.string().min(3).max(100).required(),
     category_id: Joi.string().min(3).max(100).required(),
     price: Joi.number().precision(4).required(),
@@ -121,6 +120,7 @@ const createInventoryValidator = async (req, res, next) => {
      * Update Body Params as Required
      */
     req.body = isValidBody.value;
+    req.body.shop_id = isValidParam.value.shop_id;
     req.body.owner_id = userId;
 
     /**
@@ -169,7 +169,6 @@ const updateInventoryValidator = async (req, res, next) => {
    * Schema
    */
   const bodySchema = Joi.object({
-    shop_id: Joi.string().min(3).max(255),
     name: Joi.string().min(3).max(100),
     category_id: Joi.string().min(3).max(100),
     price: Joi.number().precision(4),

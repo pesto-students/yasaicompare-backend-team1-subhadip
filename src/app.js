@@ -13,8 +13,9 @@ import Routes from './routes';
 
 const app = express();
 const logger = Logger('app');
+const allowedOrigins = config.ALLOWED_ORIGINS.split(',');
 
-app.use(cors({ credentials: true, origin: ['http://localhost:3000'] }));
+app.use(cors({ credentials: true, origin: allowedOrigins }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(successHandler);
@@ -45,13 +46,6 @@ const options = {
 };
 const httpsServer = https.createServer(options, app);
 
-httpsServer.listen(8000, async () => {
-  logger.info(`server is up at 8000`);
-  // try {
-  //   await config.DATABASE.authenticate();
-  //   await config.DATABASE.sync({ force: false });
-  //   logger.info(`DB connected`);
-  // } catch (err) {
-  //   logger.error(`${err}`);
-  // }
+httpsServer.listen(config.HTTPS_SERVER_PORT, async () => {
+  logger.info(`server is up at ${config.HTTPS_SERVER_PORT}`);
 });

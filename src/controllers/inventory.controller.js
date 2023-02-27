@@ -23,7 +23,8 @@ const getAllInventoryAction = async (req, res) => {
   /**
    * Destructuring Query
    */
-  const { active, limit } = req.body;
+  const { limit } = req.body;
+  const inStock = req.body.in_stock;
   const pageInfo = req.body.page_info;
 
   /**
@@ -31,7 +32,7 @@ const getAllInventoryAction = async (req, res) => {
    */
   const filter = {
     where: {
-      active,
+      in_stock: inStock,
       shop_id: req.body.shop_id,
     },
     attributes,

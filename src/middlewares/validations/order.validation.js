@@ -87,51 +87,78 @@ const getOrderValidator = async (req, res, next) => {
 };
 
 /**
- * Register Shop Validator
+ * Create Order Validator
  * @param {object} req
  */
 // eslint-disable-next-line consistent-return
 const createOrderValidator = async (req, res, next) => {
-  /**
-   * User ID set in Authentication
-   */
   const { userId } = req.body;
   delete req.body.userId;
 
   /**
-   * Register Schema
+   * Prepared Response
    */
-  const bodySchema = Joi.object({
-    name: Joi.string().min(3).max(255).required(),
-    address: Joi.string().min(3).max(100).required(),
-    city: Joi.string().min(3).max(100).required(),
-    state: Joi.string().min(3).max(100).required(),
-    pincode: Joi.string().min(5).max(8).required(),
-    country: Joi.string().min(2).max(10).required(),
-    gstin: Joi.string().min(2).max(30),
-    home_delievery_cost: Joi.number().precision(4).default(3.52),
-    home_delievery_distance: Joi.number().integer().default(1),
-    active: Joi.boolean().default(true),
-  });
+  const preparedResponse = {};
 
-  const isValidBody = bodySchema.validate(req.body);
+  preparedResponse.customer_id = userId;
+
+  const ordersSchema = Joi.object().keys({
+    orders: Joi.array().required(),
+  });
+  const isValidOrdersSchema = ordersSchema.validate(req.body);
 
   /**
-   * If Request is valid
+   * If Order Key is Missing
    */
-  if (!isValidBody?.error) {
-    /**
-     * Update Body Params as Required
-     */
-    req.body = isValidBody.value;
-    req.body.owner_id = userId;
-
-    next();
-  } else {
+  if (isValidOrdersSchema?.error) {
     return res.status(400).send({
-      error: isValidBody.error.details[0].message,
+      error: isValidOrdersSchema.error.details[0].message,
     });
   }
+
+  const formattedOrder = isValidOrdersSchema.value.orders.map((order) => {
+    const orderSchema = Joi.object().keys({
+      shop_id: Joi.string().min(3).max(255).required(),
+      items: Joi.array().required(),
+    });
+
+    const isValidOrderSchema = orderSchema.validate(order);
+
+    if (isValidOrderSchema?.error) {
+      return false;
+    }
+
+    const items = isValidOrderSchema.value.items.map((item) => {
+      /**
+       * Item Schema
+       */
+      const itemSchema = Joi.object({
+        item_id: Joi.string().min(3).max(255).required(),
+        amount: Joi.number().precision(2).default(0.0),
+        quantity: Joi.number().precision(0).default(1),
+      });
+
+      const isValidItem = itemSchema.validate(item);
+
+      if (isValidItem?.error) {
+        return false;
+      }
+      return isValidItem.value;
+    });
+
+    const data = {
+      shop_id: isValidOrderSchema.value.shop_id,
+      items,
+    };
+
+    return data;
+  });
+
+  req.body = {
+    orders: formattedOrder,
+    customer_id: userId,
+  };
+  next();
 };
 
 /**
