@@ -1,6 +1,23 @@
 import Services from '../services';
 
 /**
+ * Attributes for Shop to return
+ */
+const attributes = [
+  'shop_id',
+  'name',
+  'address',
+  'city',
+  'state',
+  'pincode',
+  'country',
+  'gstin',
+  'home_delievery_distance',
+  'home_delievery_cost',
+  'active',
+];
+
+/**
  * Get All Shops (vendor)
  * @param {object} req
  * @param {object} res
@@ -8,17 +25,21 @@ import Services from '../services';
  */
 const getShopsAction = async (req, res) => {
   /**
+   * Destructuring Query
+   */
+  const { active, limit } = req.body;
+  const pageInfo = req.body.page_info;
+
+  /**
    * Filter Data
    */
   const filter = {
-    where: req.body,
-    attributes: [
-      'shop_id',
-      'name',
-      'home_delievery_distance',
-      'home_delievery_cost',
-      'active',
-    ],
+    where: {
+      active,
+    },
+    attributes,
+    offset: pageInfo,
+    limit,
   };
 
   try {
@@ -68,7 +89,9 @@ const getShopsAction = async (req, res) => {
 const getShopByIdAction = async (req, res) => {
   const { id } = req.params;
   try {
-    const response = await Services.ShopsService.getShopById(id);
+    const response = await Services.ShopsService.getShopById(id, {
+      attributes,
+    });
 
     /**
      * If Shop Could Not be Found
@@ -110,7 +133,7 @@ const registerShopAction = async (req, res) => {
   /**
    * Destructuring Body
    */
-  const { body } = req.body;
+  const { body } = req;
 
   try {
     const response = await Services.ShopsService.createShop(body);
@@ -130,7 +153,6 @@ const registerShopAction = async (req, res) => {
      */
     const returnData = {
       message: 'Shop Created Successfully',
-      data: response,
     };
 
     return res.status(201).send(returnData);
@@ -157,7 +179,12 @@ const updateShopAction = async (req, res) => {
   /**
    * Destructuring Body
    */
-  const { body, filter } = req.body;
+  const { body } = req.body;
+
+  const filter = {
+    where: req.body.filter,
+    attributes,
+  };
 
   try {
     const response = await Services.ShopsService.updateShopById(body, filter);
@@ -177,7 +204,6 @@ const updateShopAction = async (req, res) => {
      */
     const returnData = {
       message: 'Shop updated Successfully',
-      data: response,
     };
 
     return res.status(201).send(returnData);

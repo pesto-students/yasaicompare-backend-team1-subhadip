@@ -1,5 +1,4 @@
 import Joi from 'joi';
-import Helpers from '../../utils/helpers';
 
 /**
  * Get Shops Validator for Vendor
@@ -9,16 +8,21 @@ import Helpers from '../../utils/helpers';
 // eslint-disable-next-line consistent-return
 const getShopsValidator = async (req, res, next) => {
   /**
+   * User ID set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
+  /**
    * Get Shop Schema
    */
   const schema = Joi.object({
     active: Joi.boolean().default(true),
+    page_info: Joi.number().default(0),
+    limit: Joi.number().min(1).max(10).default(5),
   });
 
   const isValid = schema.validate(req.query);
-  const jwtDecoded = await Helpers.JWT.decodeJWTToken(
-    Helpers.Validator.headerValidator(req)
-  );
 
   /**
    * Schema is Valid
@@ -28,7 +32,7 @@ const getShopsValidator = async (req, res, next) => {
      * Updated Body Params as Required
      */
     const filter = isValid.value;
-    filter.owner_id = jwtDecoded.data.user_id;
+    filter.owner_id = userId;
 
     req.body = filter;
 
@@ -47,10 +51,16 @@ const getShopsValidator = async (req, res, next) => {
 // eslint-disable-next-line consistent-return
 const getShopValidator = async (req, res, next) => {
   /**
+   * User ID set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
+  /**
    * Get Shop
    */
   const schema = Joi.object({
-    id: Joi.string().alphanum().min(3).max(255).required(),
+    id: Joi.string().min(3).max(255).required(),
   });
 
   const isValid = schema.validate(req.params);
@@ -75,6 +85,12 @@ const getShopValidator = async (req, res, next) => {
 // eslint-disable-next-line consistent-return
 const registerShopValidator = async (req, res, next) => {
   /**
+   * User ID set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
+  /**
    * Register Schema
    */
   const schema = Joi.object({
@@ -91,9 +107,6 @@ const registerShopValidator = async (req, res, next) => {
   });
 
   const isValid = schema.validate(req.body);
-  const jwtDecoded = await Helpers.JWT.decodeJWTToken(
-    Helpers.Validator.headerValidator(req)
-  );
 
   /**
    * If Request is valid
@@ -103,13 +116,12 @@ const registerShopValidator = async (req, res, next) => {
      * Update Body Params as Required
      */
     req.body = isValid.value;
-    req.body.owner_id = jwtDecoded.data.user_id;
+    req.body.owner_id = userId;
 
     next();
   } else {
     return res.status(400).send({
-      success: false,
-      message: isValid.error.details[0].message,
+      error: isValid.error.details[0].message,
     });
   }
 };
@@ -121,10 +133,16 @@ const registerShopValidator = async (req, res, next) => {
 // eslint-disable-next-line consistent-return
 const updateShopValidator = async (req, res, next) => {
   /**
+   * User ID set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
+  /**
    * Shop Id Missing
    */
   const paramSchema = Joi.object({
-    id: Joi.string().alphanum().min(3).max(255).required(),
+    id: Joi.string().min(3).max(255).required(),
   });
   const isValidParam = paramSchema.validate(req.params);
 
@@ -152,14 +170,11 @@ const updateShopValidator = async (req, res, next) => {
     /**
      * Update Body Params as Required
      */
-    const jwtDecoded = await Helpers.JWT.decodeJWTToken(
-      Helpers.Validator.headerValidator(req)
-    );
 
     const filter = {
       filter: {
-        owner_id: jwtDecoded.data.user_id,
-        shop_id: isValidParam.value,
+        owner_id: userId,
+        shop_id: isValidParam.value.id,
       },
       body: isValid.value,
     };
@@ -169,7 +184,9 @@ const updateShopValidator = async (req, res, next) => {
   } else {
     return res.status(400).send({
       success: false,
-      message: isValid.error.details[0].message,
+      message:
+        isValid?.error.details[0].message ||
+        isValidParam?.error.details[0].message,
     });
   }
 };

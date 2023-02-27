@@ -19,7 +19,7 @@ const createShop = (data) => ShopsModel.create(data);
  * @param { string } id
  * @returns object
  */
-const getShopById = (id) => ShopsModel.findByPk(id);
+const getShopById = (id, options) => ShopsModel.findByPk(id, options);
 
 /**
  * Update Shop By Id
@@ -27,10 +27,7 @@ const getShopById = (id) => ShopsModel.findByPk(id);
  * @param {object} filter
  * @returns object
  */
-const updateShopById = (body, filter) =>
-  ShopsModel.update(body, {
-    where: filter,
-  });
+const updateShopById = (body, filter) => ShopsModel.update(body, filter);
 
 export default {
   getAllShops,
