@@ -190,7 +190,7 @@ const updateShopAction = async (req, res) => {
     const response = await Services.ShopsService.updateShopById(body, filter);
 
     /**
-     * If Shop Could Not be created
+     * If Shop Could Not be updated
      */
     if (response === null) {
       const returnResponse = {

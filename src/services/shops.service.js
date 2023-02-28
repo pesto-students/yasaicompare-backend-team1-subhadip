@@ -9,6 +9,12 @@ const { ShopsModel } = Models;
 const getAllShops = (params) => ShopsModel.findAll(params);
 
 /**
+ * Get Shop
+ * @returns object
+ */
+const getShop = (params) => ShopsModel.findOne(params);
+
+/**
  * Create a Shop
  * @returns object
  */
@@ -34,4 +40,5 @@ export default {
   getShopById,
   createShop,
   updateShopById,
+  getShop,
 };
