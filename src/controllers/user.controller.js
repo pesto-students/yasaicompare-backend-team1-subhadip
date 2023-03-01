@@ -15,39 +15,31 @@ const getUsers = async (req, res) => {
  * @returns object
  */
 const getUserById = async (req, res) => {
-  if (!Object.prototype.hasOwnProperty.call(req.params, 'id')) {
-    res.status(400).send({ success: false, message: 'Id is Required' });
-    return;
-  }
+  const { userId } = req.body;
 
   try {
-    const response = await Services.UserService.getUserById(req.params.id);
+    const response = await Services.UserService.getUserById(userId);
     /**
      * If User Could Not be Found
      */
     if (response === null) {
-      res.status(404).send({
-        success: false,
-        message: 'User not found',
+      return res.status(404).send({
+        error: 'User not found',
       });
-      return;
     }
+
     /**
      * User Found
      */
-    res.status(200).send({
-      success: true,
-      message: `User Found`,
-      data: response,
+    return res.status(200).send({
+      response,
     });
-    return;
   } catch (error) {
     /**
      * Error Occured
      */
-    res.status(500).send({
-      success: false,
-      message: 'An error Occured while retrieving User',
+    return res.status(500).send({
+      error: 'An error Occured while retrieving User',
       data: error,
     });
   }

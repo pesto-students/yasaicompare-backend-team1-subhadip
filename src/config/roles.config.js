@@ -3,6 +3,7 @@ const roles = {
   vendor: [
     'create_shop',
     'get_shops',
+    'update_shop',
     'create_inventory',
     'get_inventory',
     'get_owners_shop',

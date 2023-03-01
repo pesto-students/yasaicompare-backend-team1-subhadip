@@ -1,5 +1,6 @@
 import Services from '../services';
 import Helpers from '../utils/helpers';
+import config from '../config';
 
 /**
  * Login Action
@@ -46,7 +47,10 @@ const loginAction = async (req, res) => {
       user_id: user.user_id,
       role: user.role,
     };
-    const accessToken = Helpers.JWT.createJWTToken(jwtData, '3600s');
+    const accessToken = Helpers.JWT.createJWTToken(
+      jwtData,
+      config.ACCESS_TOKEN_EXPIRY
+    );
 
     /**
      * Creating Refresh Token
@@ -54,7 +58,10 @@ const loginAction = async (req, res) => {
     jwtData = {
       user_id: user.user_id,
     };
-    const refreshToken = Helpers.JWT.createJWTToken(jwtData, '30d');
+    const refreshToken = Helpers.JWT.createJWTToken(
+      jwtData,
+      config.REFRESH_TOKEN_EXPIRY
+    );
 
     /**
      * User Found
@@ -63,7 +70,13 @@ const loginAction = async (req, res) => {
       accessToken,
     };
 
-    res.cookie('refreshToken', refreshToken);
+    const options = {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    };
+
+    res.cookie('refreshToken', refreshToken, options);
     return res.status(200).send(returnData);
   } catch (error) {
     /**
@@ -134,7 +147,7 @@ const registerAction = async (req, res) => {
  * @returns
  */
 const refreshTokenAction = async (req, res) => {
-  const { userId } = req.body;
+  const userId = req.body.user_id;
 
   try {
     const user = await Services.UserService.getUserById(userId);
@@ -155,7 +168,10 @@ const refreshTokenAction = async (req, res) => {
       user_id: user.user_id,
       role: user.role,
     };
-    const accessToken = Helpers.JWT.createJWTToken(jwtData, '3600s');
+    const accessToken = Helpers.JWT.createJWTToken(
+      jwtData,
+      config.ACCESS_TOKEN_EXPIRY
+    );
 
     /**
      * Creating Refresh Token
@@ -163,7 +179,10 @@ const refreshTokenAction = async (req, res) => {
     jwtData = {
       user_id: user.user_id,
     };
-    const refreshToken = Helpers.JWT.createJWTToken(jwtData, '30d');
+    const refreshToken = Helpers.JWT.createJWTToken(
+      jwtData,
+      config.REFRESH_TOKEN_EXPIRY
+    );
 
     /**
      * User Found
@@ -172,7 +191,12 @@ const refreshTokenAction = async (req, res) => {
       accessToken,
     };
 
-    res.cookie('refreshToken', refreshToken);
+    const options = {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    };
+    res.cookie('refreshToken', refreshToken, options);
     return res.status(200).send(returnData);
   } catch (error) {
     /**

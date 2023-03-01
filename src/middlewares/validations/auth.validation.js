@@ -54,7 +54,7 @@ const refreshValidator = async (req, res, next) => {
     );
 
     if (!tokenData.success) {
-      return res.status(401).send({
+      return res.status(400).send({
         error: 'Refresh Token Expired',
         data: tokenData.data,
       });

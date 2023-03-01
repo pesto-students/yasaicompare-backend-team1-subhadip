@@ -13,7 +13,7 @@ const errorMessage = { message: 'Access Forbidden' };
  */
 
 /**
- * Get All the Shops of the Vendor
+ * Get All the Shops of the (Vendor)
  */
 ShopsRouter.get(
   '/',
@@ -34,14 +34,30 @@ ShopsRouter.get(
 
 /**
  * 
+    ============================ PUT METHODS ======================================
+ */
+
+/**
+ * Update A Shop (Vendor)
+ */
+ShopsRouter.put(
+  '/:id',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('update_shop'),
+  Validations.shopsValidation.updateShopValidator,
+  Controllers.ShopsController.updateShopAction
+);
+
+/**
+ * 
     ============================ POST METHODS ======================================
  */
 
 /**
- * Register A Shop Vendor
+ * Register A Shop (Vendor)
  */
 ShopsRouter.post(
-  '/create',
+  '/register',
   authMiddleware.authenticate,
   authMiddleware.authorize('create_shop'),
   Validations.shopsValidation.registerShopValidator,
