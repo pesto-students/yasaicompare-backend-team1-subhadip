@@ -4,10 +4,10 @@
   "description": "Starter template for nodejs rest api project",
   "main": "app.js",
   "scripts": {
-    "start:dev": "rimraf build && npm run build && nodemon build/bundle.js",
+    "start:dev": "nodemon --exec \"npm run build && node build/bundle.js\" -e js --ignore build/",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "build": "webpack --mode=development",
+    "build": "rimraf build && webpack --mode=development",
     "build:prod": "rimraf build && webpack",
     "lint": "eslint .",
     "prepare": "husky install"
