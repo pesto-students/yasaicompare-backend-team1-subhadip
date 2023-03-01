@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import Helpers from '../../utils/helpers';
 
 /**
  * Get Shops Validator for Vendor
@@ -16,22 +17,22 @@ const getShopsValidator = async (req, res, next) => {
   /**
    * Get Shop Schema
    */
-  const schema = Joi.object({
+  const querySchema = Joi.object({
     active: Joi.boolean().default(true),
     page_info: Joi.number().default(0),
     limit: Joi.number().min(1).max(10).default(5),
   });
 
-  const isValid = schema.validate(req.query);
+  const isValidQuery = querySchema.validate(req.query);
 
   /**
    * Schema is Valid
    */
-  if (!isValid?.error) {
+  if (!isValidQuery?.error) {
     /**
      * Updated Body Params as Required
      */
-    const filter = isValid.value;
+    const filter = isValidQuery.value;
     filter.owner_id = userId;
 
     req.body = filter;
@@ -39,7 +40,7 @@ const getShopsValidator = async (req, res, next) => {
     next();
   } else {
     return res.status(400).send({
-      error: isValid.error.details[0].message,
+      error: isValidQuery.error.details[0].message,
     });
   }
 };
@@ -53,27 +54,27 @@ const getShopValidator = async (req, res, next) => {
   /**
    * User ID set in Authentication
    */
-  const { userId } = req.body;
+  // const { userId } = req.body;
   delete req.body.userId;
 
   /**
    * Get Shop
    */
-  const schema = Joi.object({
+  const paramSchema = Joi.object({
     id: Joi.string().min(3).max(255).required(),
   });
 
-  const isValid = schema.validate(req.params);
+  const isValidParam = paramSchema.validate(req.params);
 
   /**
    * If Request is valid
    */
-  if (!isValid?.error) {
+  if (!isValidParam?.error) {
     // Proceed to Route
     next();
   } else {
     return res.status(400).send({
-      error: isValid.error.details[0].message,
+      error: isValidParam.error.details[0].message,
     });
   }
 };
@@ -93,7 +94,7 @@ const registerShopValidator = async (req, res, next) => {
   /**
    * Register Schema
    */
-  const schema = Joi.object({
+  const bodySchema = Joi.object({
     name: Joi.string().min(3).max(255).required(),
     address: Joi.string().min(3).max(100).required(),
     city: Joi.string().min(3).max(100).required(),
@@ -106,22 +107,22 @@ const registerShopValidator = async (req, res, next) => {
     active: Joi.boolean().default(true),
   });
 
-  const isValid = schema.validate(req.body);
+  const isValidBody = bodySchema.validate(req.body);
 
   /**
    * If Request is valid
    */
-  if (!isValid?.error) {
+  if (!isValidBody?.error) {
     /**
      * Update Body Params as Required
      */
-    req.body = isValid.value;
+    req.body = isValidBody.value;
     req.body.owner_id = userId;
 
     next();
   } else {
     return res.status(400).send({
-      error: isValid.error.details[0].message,
+      error: isValidBody.error.details[0].message,
     });
   }
 };
@@ -161,12 +162,12 @@ const updateShopValidator = async (req, res, next) => {
     home_delievery_distance: Joi.number().integer().default(1),
     active: Joi.boolean().default(true),
   });
-  const isValid = bodySchema.validate(req.body);
+  const isValidBody = bodySchema.validate(req.body);
 
   /**
    * If Request is valid
    */
-  if (!isValid?.error && !isValidParam?.error) {
+  if (!isValidBody?.error && !isValidParam?.error) {
     /**
      * Update Body Params as Required
      */
@@ -176,16 +177,33 @@ const updateShopValidator = async (req, res, next) => {
         owner_id: userId,
         shop_id: isValidParam.value.id,
       },
-      body: isValid.value,
+      body: isValidBody.value,
     };
     req.body = filter;
 
-    next();
+    // Await to Resolve the Promise
+    const isOwnerOfShop = await Helpers.Validator.isOwnerOfShop(
+      filter.filter.shop_id,
+      userId
+    );
+
+    /**
+     * If Users Owner of Shop
+     */
+    if (isOwnerOfShop) {
+      next();
+    } else {
+      /**
+       * User doesn't own the shop
+       */
+      return res.status(400).send({
+        error: `User cannot update the shop`,
+      });
+    }
   } else {
     return res.status(400).send({
-      success: false,
-      message:
-        isValid?.error.details[0].message ||
+      error:
+        isValidBody?.error.details[0].message ||
         isValidParam?.error.details[0].message,
     });
   }
