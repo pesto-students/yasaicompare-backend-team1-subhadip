@@ -14,6 +14,9 @@ const attributes = [
   'gstin',
   'home_delievery_distance',
   'home_delievery_cost',
+  'image',
+  'longitude',
+  'latitude',
   'active',
 ];
 

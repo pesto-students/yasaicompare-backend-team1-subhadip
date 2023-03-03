@@ -10,6 +10,8 @@ const { DATABASE } = config;
  */
 const attributes = [
   'order_group_id',
+  'order_id',
+  'shop_id',
   'amount',
   'order_status',
   'payment_status',
@@ -38,7 +40,7 @@ const getOrdersAction = async (req, res) => {
    */
   const filter = {
     where: req.body,
-    attributes,
+    attributes: [['order_group_id', 'order_id']],
     offset: pageInfo,
     limit,
     group: ['order_group_id'],
@@ -88,96 +90,94 @@ const getOrdersAction = async (req, res) => {
  * @returns object
  */
 const getOrderByIdAction = async (req, res) => {
-  const filter = {
-    where: req.body,
-    attributes,
-    group: ['shop_id'],
-  };
-
   try {
+    /**
+     * Filter
+     */
+    let filter = {
+      where: {
+        order_group_id: req.body.order_group_id,
+        customer_id: req.body.customer_id,
+      },
+      attributes,
+      group: ['shop_id'],
+    };
+
     /**
      * Get Order Id from DB
      */
     const response = await Services.OrderService.getOrderById(filter);
-    // delete response['1']; //temp
 
     /**
      * If Order Could Not be Found
      */
     if (response === null) {
-      const returnResponse = {
-        success: false,
-        message: 'Order not found',
-      };
-      res.locals.errorMessage = JSON.stringify(returnResponse);
-      return res.status(404).send(returnResponse);
+      return res.status(404).send({
+        error: 'Order not found',
+      });
     }
 
-    const shopsData = await response.map(async (shop) => {
-      /**
-       * Filter to get Shop Orders in Order
-       */
-      filter = {
-        where: {
-          shop_id: shop.shop_id,
-          order_group_id: req.params.id,
-        },
-      };
-      let orders = (await Services.OrderService.getAllOrders(filter))[0];
+    const shopsData = await Promise.all(
+      response.map(async (order) => {
+        /**
+         * Filter to get Shop Orders in Order
+         */
+        filter = {
+          where: {
+            shop_id: order.shop_id,
+            order_group_id: req.params.id,
+          },
+          attributes,
+        };
+        const orders = (await Services.OrderService.getAllOrders(filter))[0];
 
-      /**
-       * Filter to get Ordered Items from Shop in Order
-       */
-      filter = {
-        where: {
-          order_id: orders.order_id,
-        },
-      };
-      const items = await Services.OrderItemService.getOrderItems(filter);
+        /**
+         * Filter to get Ordered Items from Shop in Order
+         */
+        filter = {
+          where: {
+            order_id: orders.order_id,
+          },
+        };
+        const items = await Services.OrderItemService.getOrderItems(filter);
 
-      let itemsFormattedData = [];
-      for (const item of items) {
-        const formattedData = {
-          item_id: item.item_id,
-          order_id: item.order_id,
-          price: item.price,
-          quantity: item.quantity,
-          fulfilled: item.fulfilled,
-          rejection_reason: item.rejection_reason,
+        const itemsFormattedData = items.map((item) => {
+          const formattedData = {
+            item_id: item.item_id,
+            order_id: item.order_id,
+            price: item.price,
+            quantity: item.quantity,
+            fulfilled: item.fulfilled,
+            rejection_reason: item.rejection_reason,
+          };
+
+          return formattedData;
+        });
+
+        /**
+         * Shop and It's ordered Items
+         */
+        const preparedData = {
+          shop_id: order.shop_id,
+          items: itemsFormattedData,
+          amount: order.amount,
+          order_status: order.order_status,
+          payment_status: order.payment_status,
+          delievery_charge: order.delievery_charge,
         };
 
-        itemsFormattedData.push(formattedData);
-      }
+        return preparedData;
+      })
+    );
 
-      /**
-       * Shop and It's ordered Items
-       */
-      const preparedData = {
-        shop_id: shop.shop_id,
-        items: itemsFormattedData,
-      };
-
-      return preparedData;
-    });
-
-    let returnData = await Promise.all(shopsData);
-    returnData = {
+    return res.status(200).send({
       order_group_id: req.params.id,
-      orderData: returnData,
-    };
-    return res.status(200).send(returnData);
+      orderData: shopsData,
+    });
   } catch (error) {
-    /**
-     * Error Occured
-     */
-    const response = {
-      success: false,
-      message: 'An error Occured while retrieving Order',
+    return res.status(500).send({
       data: error,
-    };
-    res.locals.errorMessage = JSON.stringify(response);
-
-    return res.status(500).send(response);
+    });
   }
 };
 

@@ -7,6 +7,7 @@ const roles = {
     'create_inventory',
     'update_inventory',
     'get_owners_shop',
+    'get_shop_orders',
   ],
 };
 

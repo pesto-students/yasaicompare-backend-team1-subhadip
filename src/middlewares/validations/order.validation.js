@@ -1,5 +1,4 @@
 import Joi from 'joi';
-import Helpers from '../../utils/helpers';
 
 /**
  * Get Orders Validator for Customer
@@ -120,6 +119,10 @@ const createOrderValidator = async (req, res, next) => {
     const orderSchema = Joi.object().keys({
       shop_id: Joi.string().min(3).max(255).required(),
       items: Joi.array().required(),
+      order_status: Joi.string().min(5).max(50).default('pending'),
+      payment_status: Joi.string().min(5).max(50).default('pending'),
+      amount: Joi.number().precision(3),
+      delievey_charger: Joi.number().precision(3),
     });
 
     const isValidOrderSchema = orderSchema.validate(order);
@@ -161,91 +164,8 @@ const createOrderValidator = async (req, res, next) => {
   next();
 };
 
-/**
- * Update Shop Validator
- * @param {object} req
- */
-// eslint-disable-next-line consistent-return
-const updateShopValidator = async (req, res, next) => {
-  /**
-   * User ID set in Authentication
-   */
-  const { userId } = req.body;
-  delete req.body.userId;
-
-  /**
-   * Shop Id Missing
-   */
-  const paramSchema = Joi.object({
-    id: Joi.string().min(3).max(255).required(),
-  });
-  const isValidParam = paramSchema.validate(req.params);
-
-  /**
-   * Shop Schema
-   */
-  const bodySchema = Joi.object({
-    name: Joi.string().min(3).max(255),
-    address: Joi.string().min(3).max(100),
-    city: Joi.string().min(3).max(100),
-    state: Joi.string().min(3).max(100),
-    pincode: Joi.string().min(5).max(8),
-    country: Joi.string().min(2).max(10),
-    gstin: Joi.string().min(2).max(30),
-    home_delievery_cost: Joi.number().precision(4).default(3.52),
-    home_delievery_distance: Joi.number().integer().default(1),
-    active: Joi.boolean().default(true),
-  });
-  const isValidBody = bodySchema.validate(req.body);
-
-  /**
-   * If Request is valid
-   */
-  if (!isValidBody?.error && !isValidParam?.error) {
-    /**
-     * Update Body Params as Required
-     */
-
-    const filter = {
-      filter: {
-        owner_id: userId,
-        shop_id: isValidParam.value.id,
-      },
-      body: isValidBody.value,
-    };
-    req.body = filter;
-
-    // Await to Resolve the Promise
-    const isOwnerOfShop = await Helpers.Validator.isOwnerOfShop(
-      filter.filter.shop_id,
-      userId
-    );
-
-    /**
-     * If Users Owner of Shop
-     */
-    if (isOwnerOfShop) {
-      next();
-    } else {
-      /**
-       * User doesn't own the shop
-       */
-      return res.status(400).send({
-        error: `User cannot update the shop`,
-      });
-    }
-  } else {
-    return res.status(400).send({
-      error:
-        isValidBody?.error.details[0].message ||
-        isValidParam?.error.details[0].message,
-    });
-  }
-};
-
 export default {
   getOrdersValidator,
   createOrderValidator,
   getOrderValidator,
-  updateShopValidator,
 };
