@@ -1,9 +1,10 @@
 import { Sequelize } from 'sequelize';
-import * as config from '../config';
+import config from '../config';
+import database from '../database';
 
-const { DATABASE, ROLES } = config.default;
+const { ROLES } = config;
 
-const UserModel = DATABASE.define(
+const UserModel = database.define(
   'user',
   {
     user_id: {

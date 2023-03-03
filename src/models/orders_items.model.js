@@ -1,9 +1,7 @@
 import { Sequelize } from 'sequelize';
-import config from '../config';
+import database from '../database';
 
-const { DATABASE } = config;
-
-const OrderItemsModel = DATABASE.define(
+const OrderItemsModel = database.define(
   'order_items',
   {
     item_id: {

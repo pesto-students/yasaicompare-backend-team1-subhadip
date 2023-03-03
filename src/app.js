@@ -6,6 +6,7 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import config from './config';
+import database from './database';
 import Logger from './utils/logger';
 import { errorHandler, successHandler } from './middlewares/logger.middleware';
 import Routes from './routes';
@@ -24,8 +25,8 @@ app.use('/', Routes);
 app.listen(config.SERVER_PORT, async () => {
   logger.info(`server is up at ${config.SERVER_PORT}`);
   try {
-    await config.DATABASE.authenticate();
-    await config.DATABASE.sync({ force: false });
+    await database.authenticate();
+    await database.sync({ force: false });
     logger.info(`DB connected`);
   } catch (err) {
     logger.error(`${err}`);

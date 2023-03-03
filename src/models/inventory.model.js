@@ -1,9 +1,7 @@
 import { Sequelize } from 'sequelize';
-import config from '../config';
+import database from '../database';
 
-const { DATABASE } = config;
-
-const InventoryModel = DATABASE.define(
+const InventoryModel = database.define(
   'inventory',
   {
     inventory_id: {
