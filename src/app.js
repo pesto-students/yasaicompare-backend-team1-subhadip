@@ -13,8 +13,9 @@ import Routes from './routes';
 
 const app = express();
 const logger = Logger('app');
+const allowedOrigins = config.ALLOWED_ORIGINS.split(',');
 
-app.use(cors({ credentials: true, origin: ['http://localhost:3000'] }));
+app.use(cors({ credentials: true, origin: allowedOrigins }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(successHandler);

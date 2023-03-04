@@ -2,18 +2,12 @@ import Joi from 'joi';
 import Helpers from '../../utils/helpers';
 
 /**
- * Get Shops Validator for Vendor
+ * Get Shops Validator
  * @param {object} req
  * @returns object
  */
 // eslint-disable-next-line consistent-return
 const getShopsValidator = async (req, res, next) => {
-  /**
-   * User ID set in Authentication
-   */
-  const { userId } = req.body;
-  delete req.body.userId;
-
   /**
    * Get Shop Schema
    */
@@ -33,7 +27,6 @@ const getShopsValidator = async (req, res, next) => {
      * Updated Body Params as Required
      */
     const filter = isValidQuery.value;
-    filter.owner_id = userId;
 
     req.body = filter;
 
@@ -104,6 +97,14 @@ const registerShopValidator = async (req, res, next) => {
     gstin: Joi.string().min(2).max(30),
     home_delievery_cost: Joi.number().precision(4).default(3.52),
     home_delievery_distance: Joi.number().integer().default(1),
+    image: Joi.string()
+      .min(3)
+      .max(255)
+      .default(
+        'https://cdn.pixabay.com/photo/2015/12/09/17/11/vegetables-1085063_640.jpg'
+      ),
+    latitude: Joi.number().precision(10).required(),
+    longitude: Joi.number().precision(10).required(),
     active: Joi.boolean().default(true),
   });
 
@@ -160,6 +161,14 @@ const updateShopValidator = async (req, res, next) => {
     gstin: Joi.string().min(2).max(30),
     home_delievery_cost: Joi.number().precision(4).default(3.52),
     home_delievery_distance: Joi.number().integer().default(1),
+    image: Joi.string()
+      .min(3)
+      .max(255)
+      .default(
+        'https://cdn.pixabay.com/photo/2015/12/09/17/11/vegetables-1085063_640.jpg'
+      ),
+    latitude: Joi.number().precision(10),
+    longitude: Joi.number().precision(10),
     active: Joi.boolean().default(true),
   });
   const isValidBody = bodySchema.validate(req.body);
@@ -210,8 +219,8 @@ const updateShopValidator = async (req, res, next) => {
 };
 
 export default {
-  getShopsValidator,
   registerShopValidator,
   getShopValidator,
   updateShopValidator,
+  getShopsValidator,
 };

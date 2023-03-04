@@ -67,6 +67,20 @@ const ShopsModel = database.define(
       allowNull: false,
       defaultValue: true,
     },
+    latitude: {
+      type: Sequelize.DOUBLE,
+      allowNull: false,
+    },
+    longitude: {
+      type: Sequelize.DOUBLE,
+      allowNull: false,
+    },
+    image: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      defaultValue:
+        'https://cdn.pixabay.com/photo/2015/12/09/17/11/vegetables-1085063_640.jpg',
+    },
   },
   {
     timestamps: true,

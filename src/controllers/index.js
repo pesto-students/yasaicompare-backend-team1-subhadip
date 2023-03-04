@@ -4,6 +4,7 @@ import ShopsController from './shops.controller';
 import AuthController from './auth.controller';
 import InventoryController from './inventory.controller';
 import OrderController from './order.controller';
+import VendorController from './vendor.controller';
 
 export default {
   DemoController,
@@ -12,4 +13,5 @@ export default {
   AuthController,
   InventoryController,
   OrderController,
+  VendorController,
 };

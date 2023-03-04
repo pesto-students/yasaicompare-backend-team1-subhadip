@@ -18,4 +18,5 @@ export default {
   ACCESS_TOKEN_EXPIRY: process.env.ACCESS_TOKEN_EXPIRY,
   REFRESH_TOKEN_EXPIRY: process.env.REFRESH_TOKEN_EXPIRY,
   ENV: process.env.NODE_ENV || 'development',
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
 };

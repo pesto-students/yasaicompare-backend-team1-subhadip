@@ -17,8 +17,6 @@ const errorMessage = { message: 'Access Forbidden' };
  */
 ShopsRouter.get(
   '/',
-  authMiddleware.authenticate,
-  authMiddleware.authorize('get_owners_shop'),
   Validations.shopsValidation.getShopsValidator,
   Controllers.ShopsController.getShopsAction
 );

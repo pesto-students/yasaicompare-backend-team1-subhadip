@@ -1,11 +1,24 @@
-// import querystring from 'querystring';
 import sequelize from 'sequelize';
 import Services from '../services';
-import Helpers from '../utils/helpers';
 import config from '../config';
 
 const Operator = sequelize.Op;
 const { DATABASE } = config;
+
+/**
+ * Fields for Order to Return
+ */
+const attributes = [
+  'order_group_id',
+  'order_id',
+  'shop_id',
+  'amount',
+  'order_status',
+  'payment_status',
+  'delievery_charge',
+  'createdAt',
+  'updatedAt',
+];
 
 /**
  * Get User Orders
@@ -15,44 +28,23 @@ const { DATABASE } = config;
  */
 const getOrdersAction = async (req, res) => {
   /**
-   * JWT Token Decoded
+   * Destructuring Query
    */
-  const tokenData = await Helpers.JWT.decodeJWTToken(
-    Helpers.Validator.headerValidator(req)
-  );
+  const { limit } = req.body;
+  const pageInfo = req.body.page_info;
+  delete req.body.limit;
+  delete req.body.page_info;
 
   /**
    * Filter Data
    */
   const filter = {
-    where: {
-      customer_id: tokenData.data.user_id,
-    },
-    attributes: [
-      'order_group_id',
-      'amount',
-      'order_status',
-      'payment_status',
-      'delievery_charge',
-      'createdAt',
-      'updatedAt',
-    ],
+    where: req.body,
+    attributes: [['order_group_id', 'order_id']],
+    offset: pageInfo,
+    limit,
     group: ['order_group_id'],
   };
-
-  /**
-   * If Payment Status is Set
-   */
-  if (Object.prototype.hasOwnProperty.call(req.query, 'payment_status')) {
-    filter.where.payment_status = req.query.payment_status;
-  }
-
-  /**
-   * If Order Status is Set
-   */
-  if (Object.prototype.hasOwnProperty.call(req.query, 'order_status')) {
-    filter.where.order_status = req.query.order_status;
-  }
 
   try {
     /**
@@ -65,10 +57,8 @@ const getOrdersAction = async (req, res) => {
      */
     if (orders === null) {
       const returnResponse = {
-        success: false,
-        message: 'Orders(s) not found',
+        error: 'Orders(s) not found',
       };
-      res.locals.errorMessage = JSON.stringify(returnResponse);
       return res.status(404).send(returnResponse);
     }
 
@@ -76,11 +66,8 @@ const getOrdersAction = async (req, res) => {
      * Orders Found
      */
     const returnData = {
-      success: true,
-      message: `Order(s) Found`,
-      data: orders,
+      orders,
     };
-    res.locals.errorMessage = JSON.stringify(returnData);
 
     return res.status(200).send(returnData);
   } catch (error) {
@@ -88,11 +75,9 @@ const getOrdersAction = async (req, res) => {
      * Error Occured
      */
     const response = {
-      success: false,
-      message: 'An error Occured while retrieving Order(s)',
+      error: 'An error Occured while retrieving Order(s)',
       data: error,
     };
-    res.locals.errorMessage = JSON.stringify(response);
 
     return res.status(500).send(response);
   }
@@ -105,298 +90,203 @@ const getOrdersAction = async (req, res) => {
  * @returns object
  */
 const getOrderByIdAction = async (req, res) => {
-  /**
-   * Order group Id Not Set
-   */
-  if (!Object.prototype.hasOwnProperty.call(req.params, 'id')) {
-    const validationResponse = { success: false, message: 'Id is Required' };
-    res.locals.errorMessage = JSON.stringify(validationResponse);
-    return res.status(400).send(validationResponse);
-  }
-
-  /**
-   * JWT Token Decoded
-   */
-  const tokenData = await Helpers.JWT.decodeJWTToken(
-    Helpers.Validator.headerValidator(req)
-  );
-
-  let filter = {
-    where: {
-      order_group_id: req.params.id,
-      customer_id: tokenData.data.user_id,
-    },
-    attributes: ['shop_id'],
-    group: ['shop_id'],
-  };
-
   try {
+    /**
+     * Filter
+     */
+    let filter = {
+      where: {
+        order_group_id: req.body.order_group_id,
+        customer_id: req.body.customer_id,
+      },
+      attributes,
+      group: ['shop_id'],
+    };
+
     /**
      * Get Order Id from DB
      */
     const response = await Services.OrderService.getOrderById(filter);
-    // delete response['1']; //temp
 
     /**
      * If Order Could Not be Found
      */
     if (response === null) {
-      const returnResponse = {
-        success: false,
-        message: 'Order not found',
-      };
-      res.locals.errorMessage = JSON.stringify(returnResponse);
-      return res.status(404).send(returnResponse);
+      return res.status(404).send({
+        error: 'Order not found',
+      });
     }
 
-    const shopsData = await response.map(async (shop) => {
-      /**
-       * Filter to get Shop Orders in Order
-       */
-      filter = {
-        where: {
-          shop_id: shop.shop_id,
-          order_group_id: req.params.id,
-        },
-      };
-      let orders = (await Services.OrderService.getAllOrders(filter))[0];
+    const shopsData = await Promise.all(
+      response.map(async (order) => {
+        /**
+         * Filter to get Shop Orders in Order
+         */
+        filter = {
+          where: {
+            shop_id: order.shop_id,
+            order_group_id: req.params.id,
+          },
+          attributes,
+        };
+        const orders = (await Services.OrderService.getAllOrders(filter))[0];
 
-      /**
-       * Filter to get Ordered Items from Shop in Order
-       */
-      filter = {
-        where: {
-          order_id: orders.order_id,
-        },
-      };
-      const items = await Services.OrderItemService.getOrderItems(filter);
+        /**
+         * Filter to get Ordered Items from Shop in Order
+         */
+        filter = {
+          where: {
+            order_id: orders.order_id,
+          },
+        };
+        const items = await Services.OrderItemService.getOrderItems(filter);
 
-      let itemsFormattedData = [];
-      for (const item of items) {
-        const formattedData = {
-          item_id: item.item_id,
-          order_id: item.order_id,
-          price: item.price,
-          quantity: item.quantity,
-          fulfilled: item.fulfilled,
-          rejection_reason: item.rejection_reason,
+        const itemsFormattedData = items.map((item) => {
+          const formattedData = {
+            item_id: item.item_id,
+            order_id: item.order_id,
+            price: item.price,
+            quantity: item.quantity,
+            fulfilled: item.fulfilled,
+            rejection_reason: item.rejection_reason,
+          };
+
+          return formattedData;
+        });
+
+        /**
+         * Shop and It's ordered Items
+         */
+        const preparedData = {
+          shop_id: order.shop_id,
+          items: itemsFormattedData,
+          amount: order.amount,
+          order_status: order.order_status,
+          payment_status: order.payment_status,
+          delievery_charge: order.delievery_charge,
         };
 
-        itemsFormattedData.push(formattedData);
-      }
+        return preparedData;
+      })
+    );
 
-      /**
-       * Shop and It's ordered Items
-       */
-      const preparedData = {
-        shop_id: shop.shop_id,
-        items: itemsFormattedData,
-      };
-
-      return preparedData;
-    });
-
-    let returnData = await Promise.all(shopsData);
-    returnData = {
+    return res.status(200).send({
       order_group_id: req.params.id,
-      orderData: returnData,
-    };
-    return res.status(200).send(returnData);
+      orderData: shopsData,
+    });
   } catch (error) {
-    /**
-     * Error Occured
-     */
-    const response = {
-      success: false,
-      message: 'An error Occured while retrieving Order',
+    return res.status(500).send({
       data: error,
-    };
-    res.locals.errorMessage = JSON.stringify(response);
-
-    return res.status(500).send(response);
+    });
   }
 };
 
 /**
- * Create Order Data
- * @param {object} request
- * @param {string} mode
- * @returns Object
+ * Prepare Order Data
  */
-const createOrderData = async (request, mode) => {
-  /**
-   * ValidationResponse
-   */
-  const response = {
-    success: false,
-    message: '',
-    data: {},
-  };
-
-  const object = request.body;
-
-  /**
-   * Missing Customer ID
-   */
-  if (!Object.prototype.hasOwnProperty.call(object, 'customer')) {
-    response.message = 'Customer ID is Required';
-    return response;
-  }
-
-  /**
-   * Validating Customer Id
-   */
-  const tokenData = await Helpers.JWT.decodeJWTToken(
-    Helpers.Validator.headerValidator(request)
-  );
-
-  if (!(tokenData.data.user_id === object.customer)) {
-    response.message = 'Customer Id is Incorrect';
-    return response;
-  }
-  response.data.customer_id = object.customer;
-
-  /**
-   * If orders Not Set
-   */
-  if (
-    !Object.prototype.hasOwnProperty.call(object, 'orders') ||
-    mode === 'update'
-  ) {
-    response.message = 'Order Details is/are Required';
-    return response;
-  }
-
-  // /**
-  //  * If Order Status is set
-  //  */
-  // if (
-  //   Object.prototype.hasOwnProperty.call(object, 'order_status') &&
-  //   mode === 'update'
-  // ) {
-  //   response.data.order_status = object.order_status;
-  // }
-
+const prepareOrderData = async (body) => {
   /**
    * Order Group ID
    */
-  let filter = {
+  const filter = {
     where: {
-      customer_id: response.data.customer_id,
+      customer_id: body.customer_id,
     },
     distinct: true,
     col: 'customer_id',
   };
   const orderNumber = (await Services.OrderService.getOrdersCount(filter)) + 1;
-  const groupId = `${response.data.customer_id} - ${orderNumber}`;
+  const groupId = `${body.customer_id} - ${orderNumber}`;
 
   const finalData = await Promise.all(
-    /**
-     * Loop orders
-     */
-    object.orders.map(async (order) => {
-      const validatedItem = {};
-      if (
-        !Object.prototype.hasOwnProperty.call(order, 'shop_id') &&
-        !Object.prototype.hasOwnProperty.call(order, 'items')
-      ) {
+    body.orders.map(async (order) => {
+      /**
+       * Shop Order failed in Validation
+       */
+      if (!order) {
         return false;
       }
 
-      validatedItem.shop_id = order.shop_id;
-      const orderId = `${groupId} - ${validatedItem.shop_id}`;
+      const orderId = `${groupId} - ${order.shop_id}`;
       let totalAmount = 0;
 
-      let shopItems = [];
       /**
-       * Loop Order Items
+       * Loop Shop Order Items
        * @returns object
        */
-      for (const item of order.items) {
-        validatedItem.item_id = item.item_id;
-        validatedItem.amount = item.amount;
-
-        /**
-         * If set Quantity
-         */
-        if (Object.prototype.hasOwnProperty.call(item, 'quantity')) {
-          validatedItem.quantity = item.quantity;
-        } else {
-          validatedItem.quantity = 1;
-        }
-
-        const itemfilter = {
-          where: {
-            inventory_id: validatedItem.item_id,
-            shop_id: validatedItem.shop_id,
-            quantity: {
-              [Operator.gte]: validatedItem.quantity,
-            },
-            price: validatedItem.amount,
-            in_stock: true,
-          },
-        };
-
-        const inventory = await Services.InventoryService.getInventory(
-          itemfilter
-        );
-        if (inventory === null) {
+      const shopItems = await Promise.all(
+        order.items.map(async (item) => {
           /**
-           * Push into Result Array
+           * Item failed in Validation
            */
-          shopItems.push(false);
-          continue;
-        }
+          if (!item) {
+            return false;
+          }
 
-        const updatedInventory = inventory.quantity - validatedItem.quantity;
+          const itemfilter = {
+            where: {
+              inventory_id: item.item_id,
+              shop_id: order.shop_id,
+              quantity: {
+                [Operator.gte]: item.quantity,
+              },
+              in_stock: true,
+            },
+          };
 
-        const preparedData = {
-          orderItemData: {
-            order_id: orderId,
-            customer_id: response.data.customer_id,
-            price: inventory.price,
-            quantity: validatedItem.quantity,
-          },
-          inventoryData: {
-            inventory_id: validatedItem.item_id,
-            quantity: updatedInventory,
-          },
-        };
+          const inventory = await Services.InventoryService.getInventory(
+            itemfilter
+          );
 
-        /**
-         * Calculating Total Price
-         */
-        totalAmount += inventory.price * validatedItem.quantity;
+          if (inventory === null) {
+            return false;
+          }
 
-        if (updatedInventory === 0) {
-          preparedData.inventoryData.in_stock = false;
-        }
+          const updatedInventory = inventory.quantity - item.quantity;
 
-        /**
-         * Push into Result Array
-         */
-        shopItems.push(preparedData);
-      }
+          const preparedData = {
+            orderItemData: {
+              order_id: orderId,
+              customer_id: body.customer_id,
+              price: inventory.price,
+              quantity: item.quantity,
+            },
+            inventoryData: {
+              inventory_id: item.item_id,
+              quantity: updatedInventory,
+            },
+          };
 
-      shopItems = {
+          /**
+           * Calculating Total Price
+           */
+          totalAmount += inventory.price * item.quantity;
+
+          if (updatedInventory === 0) {
+            preparedData.inventoryData.in_stock = false;
+          }
+
+          return preparedData;
+        })
+      );
+
+      const shopData = {
         orderData: {
           order_id: orderId,
           order_no: orderNumber,
-          customer_id: response.data.customer_id,
+          customer_id: body.customer_id,
           amount: totalAmount,
           order_group_id: groupId,
-          shop_id: validatedItem.shop_id,
+          shop_id: order.shop_id,
         },
         shopItems,
       };
 
-      return shopItems;
+      return shopData;
     })
   );
 
-  response.success = true;
-  response.data = finalData;
-  return response;
+  return finalData;
 };
 
 /**
@@ -409,19 +299,14 @@ const createOrderAction = async (req, res) => {
   /**
    * Params Validation
    */
-  const validation = await createOrderData(req);
-  if (!validation.success) {
-    res.locals.errorMessage = JSON.stringify(validation);
-    return res.status(400).send(validation);
-  }
+  const preparedData = await prepareOrderData(req.body);
 
+  /**
+   * Start Transaction
+   */
+  const t = await DATABASE.transaction();
   try {
-    /**
-     * Start Transaction
-     */
-    const t = await DATABASE.transaction();
-
-    validation.data.forEach(async (order) => {
+    preparedData.forEach(async (order) => {
       const { orderData, shopItems } = order;
 
       /**
@@ -436,7 +321,7 @@ const createOrderAction = async (req, res) => {
         /**
          * Skip if false
          */
-        if (shopItem === false) {
+        if (!shopItem) {
           return;
         }
 
@@ -445,19 +330,17 @@ const createOrderAction = async (req, res) => {
           t
         );
 
-        const inventoryId = shopItem.inventoryData.inventory_id;
-        delete shopItem.inventoryData.inventory_id;
+        const { inventoryData } = shopItem;
+        const inventoryId = inventoryData.inventory_id;
+        delete inventoryData.inventory_id;
 
         /**
          * Update Inventory
          */
-        await Services.InventoryService.updateInventory(
-          shopItem.inventoryData,
-          {
-            where: { inventory_id: inventoryId },
-            t,
-          }
-        );
+        await Services.InventoryService.updateInventory(inventoryData, {
+          where: { inventory_id: inventoryId },
+          t,
+        });
       });
     });
 
@@ -467,10 +350,8 @@ const createOrderAction = async (req, res) => {
     await t.commit();
 
     const returnData = {
-      success: true,
       message: 'Order Placed Successfully',
     };
-    res.locals.errorMessage = JSON.stringify(returnData);
 
     return res.status(201).send(returnData);
   } catch (error) {
@@ -483,11 +364,9 @@ const createOrderAction = async (req, res) => {
      * Error Occured
      */
     const response = {
-      success: false,
-      message: 'An error Occured while creating Order',
+      error: 'An error Occured while creating Order',
       data: error,
     };
-    res.locals.errorMessage = JSON.stringify(response);
 
     return res.status(502).send(response);
   }
