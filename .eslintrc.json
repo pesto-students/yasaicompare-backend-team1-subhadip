@@ -15,7 +15,8 @@
     "prettier/prettier": "error",
     "no-extraneous-dependencies": "off",
     "import/prefer-default-export": "off",
-    "import/no-named-as-default": 0
+    "import/no-named-as-default": 0,
+    "consistent-return": "off"
   },
   "globals": {
     "__dirname": true

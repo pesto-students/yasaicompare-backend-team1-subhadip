@@ -17,6 +17,26 @@ UserRouter.get(
   Controllers.UserController.getUserById
 );
 
+UserRouter.get(
+  '/addresses',
+  authMiddleware.authenticate,
+  Controllers.UserController.getAddresses
+);
+
+UserRouter.post(
+  '/addresses',
+  authMiddleware.authenticate,
+  validations.userValidation.createAddressValidator,
+  Controllers.UserController.createAddress
+);
+
+UserRouter.put(
+  '/addresses',
+  authMiddleware.authenticate,
+  validations.userValidation.updateAddressValidator,
+  Controllers.UserController.updateAddress
+);
+
 /**
  * Error Routes
  */
