@@ -5,6 +5,7 @@ import ShopsService from './shops.service';
 import InventoryService from './inventory.service';
 import OrderService from './order.service';
 import OrderItemService from './order_items.service';
+import CartService from './cart.service';
 
 export default {
   DemoService,
@@ -14,4 +15,5 @@ export default {
   InventoryService,
   OrderService,
   OrderItemService,
+  CartService,
 };

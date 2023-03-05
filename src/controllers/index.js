@@ -5,6 +5,7 @@ import AuthController from './auth.controller';
 import InventoryController from './inventory.controller';
 import OrderController from './order.controller';
 import VendorController from './vendor.controller';
+import CartController from './cart.controller';
 
 export default {
   DemoController,
@@ -14,4 +15,5 @@ export default {
   InventoryController,
   OrderController,
   VendorController,
+  CartController,
 };

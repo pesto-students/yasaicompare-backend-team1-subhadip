@@ -1,5 +1,5 @@
 import UserModel from './user.model';
-import CartModel from './cart.model copy';
+import CartModel from './cart.model';
 import InventoryModel from './inventory.model';
 import OrderItemsModel from './orders_items.model';
 import OrderModel from './orders.model';

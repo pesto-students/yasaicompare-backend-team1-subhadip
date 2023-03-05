@@ -1,5 +1,5 @@
 const roles = {
-  customer: ['create_order', 'get_orders_customer', 'create_order'],
+  customer: ['create_order', 'get_orders_customer', 'create_order', 'cart'],
   vendor: [
     'create_shop',
     'get_shops',

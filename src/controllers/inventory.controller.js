@@ -4,7 +4,7 @@ import Services from '../services';
  * Attributes for Inventory to return
  */
 const attributes = [
-  'inventory_id',
+  ['inventory_id', 'item_id'],
   'shop_id',
   'name',
   'price',

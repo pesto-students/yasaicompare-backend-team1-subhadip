@@ -22,6 +22,11 @@ const CartModel = database.define(
       type: Sequelize.STRING,
       allowNull: false,
     },
+    quantity: {
+      type: Sequelize.BIGINT,
+      allowNull: false,
+      defaultValue: 1,
+    },
   },
   {
     timestamps: true,
