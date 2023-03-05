@@ -1,9 +1,9 @@
 import sequelize from 'sequelize';
 import Services from '../services';
-import config from '../config';
+import database from '../database';
 
 const Operator = sequelize.Op;
-const { DATABASE } = config;
+const DATABASE = database;
 
 /**
  * Fields for Order to Return

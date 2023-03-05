@@ -4,6 +4,7 @@ import userValidation from './user.validation';
 import inventoryValidation from './inventory.validation';
 import orderValidation from './order.validation';
 import vendorValidation from './vendor.validation';
+import cartValidation from './cart.validation';
 
 export default {
   authValidation,
@@ -12,4 +13,5 @@ export default {
   inventoryValidation,
   orderValidation,
   vendorValidation,
+  cartValidation,
 };
