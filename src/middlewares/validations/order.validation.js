@@ -103,11 +103,12 @@ const createOrderValidator = async (req, res, next) => {
 
   const ordersSchema = Joi.object().keys({
     orders: Joi.array().required(),
+    delievery_address: Joi.string().min(3).max(255).required(),
   });
   const isValidOrdersSchema = ordersSchema.validate(req.body);
 
   /**
-   * If Order Key is Missing
+   * If Order Schema is incorrect
    */
   if (isValidOrdersSchema?.error) {
     return res.status(400).send({
@@ -119,10 +120,6 @@ const createOrderValidator = async (req, res, next) => {
     const orderSchema = Joi.object().keys({
       shop_id: Joi.string().min(3).max(255).required(),
       items: Joi.array().required(),
-      order_status: Joi.string().min(5).max(50).default('pending'),
-      payment_status: Joi.string().min(5).max(50).default('pending'),
-      amount: Joi.number().precision(3),
-      delievey_charger: Joi.number().precision(3),
     });
 
     const isValidOrderSchema = orderSchema.validate(order);
@@ -137,7 +134,6 @@ const createOrderValidator = async (req, res, next) => {
        */
       const itemSchema = Joi.object({
         item_id: Joi.string().min(3).max(255).required(),
-        amount: Joi.number().precision(2).default(0.0),
         quantity: Joi.number().precision(0).default(1),
       });
 
@@ -160,12 +156,80 @@ const createOrderValidator = async (req, res, next) => {
   req.body = {
     orders: formattedOrder,
     customer_id: userId,
+    delieveryAddress: isValidOrdersSchema.value.delievery_address,
   };
   next();
+};
+
+/**
+ * Confirm Order Validator
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
+ */
+const confirmOrderValidator = async (req, res, next) => {
+  /**
+   * User Id set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
+  const bodySchema = Joi.object({
+    order_group_id: Joi.string().min(3).max(255).required(),
+    transaction_id: Joi.string().min(3).max(255).required(),
+  });
+  const isValidBodySchema = bodySchema.validate(req.body);
+
+  if (!isValidBodySchema?.error) {
+    const filter = isValidBodySchema.value;
+    filter.customer_id = userId;
+
+    req.body = filter;
+
+    next();
+  } else {
+    return res.status(400).send({
+      error: isValidBodySchema.error.details[0].message,
+    });
+  }
+};
+
+/**
+ * Delete Order Validator
+ * @param {objectDelete Order Validator} req
+ * @param {functionject} res
+ */
+const deleteOrderValidator = async (req, res, next) => {
+  /**
+   * User Id set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
+  const paramSchema = Joi.object({
+    id: Joi.string().min(3).max(255).required(),
+  });
+  const isValidParam = paramSchema.validate(req.params);
+
+  if (!isValidParam?.error) {
+    const filter = {
+      customer_id: userId,
+      order_group_id: isValidParam.value.id,
+    };
+
+    req.body = filter;
+    next();
+  } else {
+    return res.status(400).send({
+      error: isValidParam.error.details[0].message,
+    });
+  }
 };
 
 export default {
   getOrdersValidator,
   createOrderValidator,
   getOrderValidator,
+  confirmOrderValidator,
+  deleteOrderValidator,
 };

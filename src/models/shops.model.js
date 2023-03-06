@@ -81,6 +81,16 @@ const ShopsModel = database.define(
       defaultValue:
         'https://cdn.pixabay.com/photo/2015/12/09/17/11/vegetables-1085063_640.jpg',
     },
+    transaction_id: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      defaultValue: 'pending',
+    },
+    draft: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
   },
   {
     timestamps: true,

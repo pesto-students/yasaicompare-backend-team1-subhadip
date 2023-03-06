@@ -20,6 +20,11 @@ const OrderModel = database.define(
       allowNull: false,
       uniqueKey: false,
     },
+    delievery_address: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      uniqueKey: false,
+    },
     amount: {
       type: Sequelize.DOUBLE,
       allowNull: false,
@@ -27,9 +32,9 @@ const OrderModel = database.define(
     },
     order_status: {
       type: Sequelize.STRING,
-      enum: ['pending, confirmed, in_transit, delievered'],
+      enum: ['draft', 'pending, confirmed, in_transit, delievered'],
       allowNull: false,
-      defaultValue: 'pending',
+      defaultValue: 'draft',
     },
     payment_status: {
       type: Sequelize.STRING,
@@ -50,6 +55,11 @@ const OrderModel = database.define(
       type: Sequelize.DOUBLE,
       allowNull: false,
       defaultValue: 0.0,
+    },
+    draft: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
   },
   {

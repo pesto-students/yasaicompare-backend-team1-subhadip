@@ -1,14 +1,105 @@
 import Joi from 'joi';
+
 /**
  * Get User Validator
  * @param {object} req
  */
 // eslint-disable-next-line consistent-return
 const getUserValidator = async (req, res, next) => {
+  /**
+   * User ID set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
+  const filter = {
+    user_id: userId,
+  };
+
+  req.body = filter;
   next();
 };
 
+/**
+ * Get Addresses Validator
+ * @param {object} req
+ */
+// eslint-disable-next-line consistent-return
+const getAddressesValidator = async (req, res, next) => {
+  /**
+   * User ID set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
+  /**
+   * Get User Schema
+   */
+  const querySchema = Joi.object({
+    page_info: Joi.number().default(0),
+    limit: Joi.number().min(1).max(10).default(10),
+  });
+
+  const isValidQuery = querySchema.validate(req.query);
+
+  if (!isValidQuery?.error) {
+    const filter = isValidQuery.value;
+    filter.userId = userId;
+
+    req.body = filter;
+    next();
+  } else {
+    return res.status(400).send({
+      error: isValidQuery.error.details[0].message,
+    });
+  }
+};
+
+/**
+ * Get Address Validator
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
+ */
+const getAddressValidator = async (req, res, next) => {
+  /**
+   * User ID set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
+  const paramSchema = Joi.object({
+    id: Joi.string().min(3).max(255).required(),
+  });
+  const isValidParam = paramSchema.validate(req.params);
+
+  if (!isValidParam?.error) {
+    const filter = isValidParam.value;
+    filter.user_id = userId;
+
+    req.body = filter;
+    next();
+  } else {
+    return res.status(400).send({
+      error: isValidParam.error.details[0].message,
+    });
+  }
+};
+
+/**
+ * Create Address Validator
+ * @param {object} req
+ * @param {object} res
+ * @param {func} next
+ * @returns
+ */
 const createAddressValidator = (req, res, next) => {
+  /**
+   * User ID set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
   const { body } = req;
 
   /**
@@ -21,7 +112,6 @@ const createAddressValidator = (req, res, next) => {
     state: Joi.string().min(3).max(255).required(),
     country: Joi.string().min(3).max(255).required(),
     pincode: Joi.number().required(),
-    user_id: Joi.string().uuid().required(),
     name: Joi.string().min(3).max(255).required(),
     address: Joi.string().min(3).max(100).required(),
     latitude: Joi.number().precision(10).required(),
@@ -35,6 +125,9 @@ const createAddressValidator = (req, res, next) => {
    * If Request is valid
    */
   if (!isValidBody?.error) {
+    req.body = isValidBody.value;
+    req.body.user_id = userId;
+
     next();
   } else {
     return res.status(400).send({
@@ -43,20 +136,33 @@ const createAddressValidator = (req, res, next) => {
   }
 };
 
+/**
+ * Update Address
+ * @param {object} req
+ * @param {object} res
+ * @param {func} next
+ * @returns
+ */
 const updateAddressValidator = (req, res, next) => {
+  /**
+   * User ID set in Authentication
+   */
+  const { userId } = req.body;
+  delete req.body.userId;
+
   const { body } = req;
 
   /**
-   * Create Address Schema
+   * Update Address Schema
    */
   const bodySchema = Joi.object({
+    id: Joi.string().min(3).max(255).required(),
     address_line_1: Joi.string().min(3).max(255).optional(),
     address_line_2: Joi.string().min(3).max(255).optional(),
     city: Joi.string().min(3).max(255).optional(),
     state: Joi.string().min(3).max(255).optional(),
     country: Joi.string().min(3).max(255).optional(),
     pincode: Joi.number().optional(),
-    user_id: Joi.string().uuid().optional(),
     name: Joi.string().min(3).max(255).optional(),
     address: Joi.string().min(3).max(100).optional(),
     latitude: Joi.number().precision(10).optional(),
@@ -70,6 +176,9 @@ const updateAddressValidator = (req, res, next) => {
    * If Request is valid
    */
   if (!isValidBody?.error) {
+    req.body = isValidBody.value;
+    req.body.user_id = userId;
+
     next();
   } else {
     return res.status(400).send({
@@ -80,6 +189,8 @@ const updateAddressValidator = (req, res, next) => {
 
 export default {
   getUserValidator,
+  getAddressesValidator,
+  getAddressValidator,
   createAddressValidator,
   updateAddressValidator,
 };

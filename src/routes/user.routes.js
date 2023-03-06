@@ -8,6 +8,11 @@ const { authMiddleware } = Middleware;
 const errorMessage = { message: 'Access Forbidden' };
 
 /**
+ * 
+    ============================ GET METHODS ======================================
+ */
+
+/**
  * Get User Info
  */
 UserRouter.get(
@@ -17,21 +22,51 @@ UserRouter.get(
   Controllers.UserController.getUserById
 );
 
+/**
+ * Get User Address
+ */
 UserRouter.get(
-  '/addresses',
+  '/address',
   authMiddleware.authenticate,
+  validations.userValidation.getAddressesValidator,
   Controllers.UserController.getAddresses
 );
 
+/**
+ * Get User Address
+ */
+UserRouter.get(
+  '/address/:id',
+  authMiddleware.authenticate,
+  validations.userValidation.getAddressValidator,
+  Controllers.UserController.getAddresses
+);
+
+/**
+ * 
+    ============================ POST METHODS ======================================
+ */
+
+/**
+ * Add User Address
+ */
 UserRouter.post(
-  '/addresses',
+  '/address',
   authMiddleware.authenticate,
   validations.userValidation.createAddressValidator,
   Controllers.UserController.createAddress
 );
 
+/**
+ * 
+    ============================ PUT METHODS ======================================
+ */
+
+/**
+ * Update User Address
+ */
 UserRouter.put(
-  '/addresses',
+  '/address',
   authMiddleware.authenticate,
   validations.userValidation.updateAddressValidator,
   Controllers.UserController.updateAddress
