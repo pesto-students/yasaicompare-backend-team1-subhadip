@@ -36,7 +36,7 @@ const getUserById = async (req, res) => {
     const response = await Services.UserService.getUserById(userId, {
       attributes: userAttributes,
     });
-    console.log(userId, userAttributes, response)
+
     /**
      * If User Could Not be Found
      */

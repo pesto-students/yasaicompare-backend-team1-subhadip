@@ -9,14 +9,7 @@ const getUserValidator = async (req, res, next) => {
   /**
    * User ID set in Authentication
    */
-  const { userId } = req.body;
-  delete req.body.userId;
 
-  const filter = {
-    user_id: userId,
-  };
-
-  req.body = filter;
   next();
 };
 
