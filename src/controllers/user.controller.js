@@ -1,6 +1,7 @@
 import Services from '../services';
 
 const userAttributes = [
+  'user_id',
   'email',
   'first_name',
   'last_name',
@@ -35,6 +36,7 @@ const getUserById = async (req, res) => {
     const response = await Services.UserService.getUserById(userId, {
       attributes: userAttributes,
     });
+    console.log(userId, userAttributes, response)
     /**
      * If User Could Not be Found
      */
