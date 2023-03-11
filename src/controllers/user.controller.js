@@ -114,10 +114,20 @@ const createAddress = async (req, res) => {
   const { body } = req;
 
   try {
-    // eslint-disable-next-line no-unused-vars
-    const response = await Services.UserAddressService.createAddress(body);
+    const response = await Services.UserAddressService.createAddress(body, userAddressAttributes);
+
+    /**
+     * If Address Could Not be added
+     */
+    if (response === null) {
+      const returnResponse = {
+        error: 'Address Could not be Saved',
+      };
+      return res.status(500).send(returnResponse);
+    }
+
     return res.status(201).send({
-      message: 'Address Saved Succesfully',
+      response,
     });
   } catch (error) {
     /**
@@ -134,10 +144,21 @@ const updateAddress = async (req, res) => {
   const { body } = req;
 
   try {
-    // eslint-disable-next-line no-unused-vars
-    const response = await Services.UserAddressService.updateAddress(body);
+
+    const response = await Services.UserAddressService.updateAddress(body, userAddressAttributes);
+    
+    /**
+     * If Address Could Not be updated
+     */
+    if (response === null) {
+      const returnResponse = {
+        error: 'Address Could not be updated',
+      };
+      return res.status(500).send(returnResponse);
+    }
+
     return res.status(200).send({
-      message: 'Address Updated Successfully',
+      response,
     });
   } catch (error) {
     /**
