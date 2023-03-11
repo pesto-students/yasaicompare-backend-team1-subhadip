@@ -61,6 +61,10 @@ const OrderModel = database.define(
       allowNull: false,
       defaultValue: true,
     },
+    payment_intent: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
   },
   {
     timestamps: true,

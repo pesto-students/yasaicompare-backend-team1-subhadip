@@ -2,9 +2,12 @@ import sequelize from 'sequelize';
 import Services from '../services';
 import database from '../database';
 import Helpers from '../utils/helpers';
+import config from '../config';
+import StripeModule from 'stripe';
 
 const Operator = sequelize.Op;
 const DATABASE = database;
+const Stripe = StripeModule(config.STRIPE_PRIVATE_KEY);
 
 /**
  * Fields for Order to Return
@@ -223,6 +226,7 @@ const prepareOrderData = async (body) => {
   };
   const orderNumber = (await Services.OrderService.getOrdersCount(filter)) + 1;
   const groupId = `${body.customer_id} - ${orderNumber}`;
+  let finalAmount = 0;
 
   const finalData = await Promise.all(
     body.orders.map(async (order) => {
@@ -336,11 +340,17 @@ const prepareOrderData = async (body) => {
         shopItems,
       };
 
+      /**
+       * Final Amount to be charged
+       */
+      finalAmount += totalAmount;
+
       return shopData;
     })
   );
 
   finalData.orderId = groupId;
+  finalData.totalAmount = finalAmount;
 
   return finalData;
 };
@@ -366,7 +376,12 @@ const createOrderAction = async (req, res) => {
   /**
    * Order Group Id
    */
-  const groupId = preparedData.orderId;
+  const { groupId, totalAmount } = preparedData;
+
+  const paymentIntent = await Stripe.paymentIntents.create({
+    amount: totalAmount * 100,
+    currency: 'inr',
+  });
 
   /**
    * Start Transaction
@@ -382,6 +397,11 @@ const createOrderAction = async (req, res) => {
       }
 
       const { orderData, shopItems } = order;
+
+      /**
+       * Adding Payment Intent Data in Order Entry
+       */
+      orderData.paymentIntent = paymentIntent.id;
 
       /**
        * Create Order
@@ -430,8 +450,9 @@ const createOrderAction = async (req, res) => {
     await t.commit();
 
     const returnData = {
-      message: 'Order Placed Successfully',
+      message: 'Order Waiting for Confirmation',
       order_id: groupId,
+      paymentData: paymentIntent,
     };
 
     return res.status(201).send(returnData);
@@ -462,6 +483,17 @@ const createOrderAction = async (req, res) => {
 const confirmOrderAction = async (req, res) => {
   const orderId = req.body.order_group_id;
   const customerId = req.body.customer_id;
+  const transactionId = req.body.transaction_id;
+
+  /**
+   * Payment Confirmation
+   */
+  const paymentIntent = await Stripe.paymentIntents.confirm(transactionId);
+  if (paymentIntent.status !== 'succeeded') {
+    return res.status(400).send({
+      error: 'Payment not Confirmed',
+    });
+  }
 
   /**
    * Filter Data
@@ -480,7 +512,6 @@ const confirmOrderAction = async (req, res) => {
      * Data to Update
      */
     const data = {
-      transaction_id: req.body.transaction_id,
       draft: false,
     };
 
