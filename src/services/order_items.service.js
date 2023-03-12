@@ -29,9 +29,17 @@ const getOrderById = (id) => OrderItemsModel.findByPk(id);
  */
 const getOrdersCount = (filter) => OrderItemsModel.count(filter);
 
+/**
+ * Delete Order Item
+ * @param {object} filter
+ * @returns
+ */
+const deleteOrderItemId = (filter) => OrderItemsModel.destroy(filter);
+
 export default {
   getOrderItems,
   createOrderItem,
   getOrderById,
   getOrdersCount,
+  deleteOrderItemId,
 };

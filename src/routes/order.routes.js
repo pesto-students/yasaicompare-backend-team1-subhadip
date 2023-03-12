@@ -51,6 +51,33 @@ OrderRouter.post(
 );
 
 /**
+ * Confrim An Order
+ */
+OrderRouter.post(
+  '/confirm_order',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('create_order'),
+  Validations.orderValidation.confirmOrderValidator,
+  Controllers.OrderController.confirmOrderAction
+);
+
+/**
+ * 
+    ============================ DELETE METHODS ======================================
+ */
+
+/**
+ * Delete An Order (Payment Failed)
+ */
+OrderRouter.delete(
+  '/:id',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('create_order'),
+  Validations.orderValidation.deleteOrderValidator,
+  Controllers.OrderController.deleteOrderAction
+);
+
+/**
  * Error Routes
  */
 OrderRouter.get('*', (req, res) => {

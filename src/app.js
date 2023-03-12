@@ -46,8 +46,8 @@ const options = {
 };
 const httpsServer = https.createServer(options, app);
 
-httpsServer.listen(8000, async () => {
-  logger.info(`server is up at 8000`);
+httpsServer.listen(config.HTTPS_SERVER_PORT, async () => {
+  logger.info(`server is up at ${config.HTTPS_SERVER_PORT}`);
   // try {
   //   await config.DATABASE.authenticate();
   //   await config.DATABASE.sync({ force: false });

@@ -1,12 +1,27 @@
 import Services from '../services';
 
-const getUsers = async (req, res) => {
-  const users = await Services.UserService.getAllUsers();
-  res.status(200).send({
-    success: true,
-    data: users,
-  });
-};
+const userAttributes = [
+  'user_id',
+  'email',
+  'first_name',
+  'last_name',
+  'image',
+  'contact_no',
+  'role',
+];
+
+const userAddressAttributes = [
+  'id',
+  'address_line_1',
+  'address_line_2',
+  'city',
+  'state',
+  'country',
+  'latitude',
+  'longitude',
+  'pincode',
+  'is_active',
+];
 
 /**
  * Get User By ID
@@ -18,7 +33,10 @@ const getUserById = async (req, res) => {
   const { userId } = req.body;
 
   try {
-    const response = await Services.UserService.getUserById(userId);
+    const response = await Services.UserService.getUserById(userId, {
+      attributes: userAttributes,
+    });
+
     /**
      * If User Could Not be Found
      */
@@ -52,21 +70,35 @@ const getUserById = async (req, res) => {
  * @returns object
  */
 const getAddresses = async (req, res) => {
-  const { userId, offset, limit } = req.query;
+  const { limit, userId } = req.body;
+  const pageInfo = req.body.page_info;
+  delete req.body.limit;
 
   try {
-    const response = await Services.UserAddressService.getAllAddress(
-      { user_id: userId },
-      parseInt(offset, 10),
-      parseInt(limit, 10)
+    const userAddressFilter = {
+      where: {
+        user_id: userId,
+      },
+      attributes: userAddressAttributes,
+      offset: pageInfo,
+      limit,
+    };
+
+    const addresses = await Services.UserAddressService.getAllAddress(
+      userAddressFilter
     );
-    return res.status(200).send(response);
+
+    const returnData = {
+      addresses,
+    };
+
+    return res.status(200).send(returnData);
   } catch (error) {
     /**
      * Error Occured
      */
     return res.status(500).send({
-      error: 'An error Occured while retrieving User',
+      error: 'An error Occured while retrieving User Addresses',
       data: error,
     });
   }
@@ -82,8 +114,21 @@ const createAddress = async (req, res) => {
   const { body } = req;
 
   try {
-    const response = await Services.UserAddressService.createAddress(body);
-    return res.status(201).send(response);
+    const response = await Services.UserAddressService.createAddress(body, userAddressAttributes);
+
+    /**
+     * If Address Could Not be added
+     */
+    if (response === null) {
+      const returnResponse = {
+        error: 'Address Could not be Saved',
+      };
+      return res.status(500).send(returnResponse);
+    }
+
+    return res.status(201).send({
+      response,
+    });
   } catch (error) {
     /**
      * Error Occured
@@ -99,8 +144,22 @@ const updateAddress = async (req, res) => {
   const { body } = req;
 
   try {
-    const response = await Services.UserAddressService.updateAddress(body);
-    return res.status(200).send(response);
+
+    const response = await Services.UserAddressService.updateAddress(body, userAddressAttributes);
+    
+    /**
+     * If Address Could Not be updated
+     */
+    if (response === null) {
+      const returnResponse = {
+        error: 'Address Could not be updated',
+      };
+      return res.status(500).send(returnResponse);
+    }
+
+    return res.status(200).send({
+      response,
+    });
   } catch (error) {
     /**
      * Error Occured
@@ -113,7 +172,6 @@ const updateAddress = async (req, res) => {
 };
 
 export default {
-  getUsers,
   getUserById,
   getAddresses,
   createAddress,

@@ -10,6 +10,11 @@ const OrderItemsModel = database.define(
       allowNull: false,
       primaryKey: true,
     },
+    inventory_id: {
+      type: Sequelize.STRING,
+      defaultValue: Sequelize.UUIDV4,
+      allowNull: false,
+    },
     order_id: {
       type: Sequelize.STRING,
       allowNull: false,

@@ -1,4 +1,5 @@
 import Services from '../services';
+import Helpers from '../utils/helpers';
 
 /**
  * Attributes for Shop to return
@@ -30,7 +31,7 @@ const getShopsAction = async (req, res) => {
   /**
    * Destructuring Query
    */
-  const { active, limit } = req.body;
+  const { active, limit, latitude, longitude, pincode } = req.body;
   const pageInfo = req.body.page_info;
 
   /**
@@ -39,6 +40,7 @@ const getShopsAction = async (req, res) => {
   const filter = {
     where: {
       active,
+      pincode,
     },
     attributes,
     offset: pageInfo,
@@ -61,11 +63,36 @@ const getShopsAction = async (req, res) => {
       return res.status(404).send(returnResponse);
     }
 
+    const shopData = shops.map((shop) => {
+      const updatedShop = shop.dataValues;
+
+      const userLocation = {
+        latitude,
+        longitude,
+      };
+
+      const shopLocation = {
+        latitude: updatedShop.latitude,
+        longitude: updatedShop.longitude,
+      };
+
+      const distance = Helpers.DistanceHelper.getDistanceOfShop(
+        userLocation,
+        shopLocation
+      );
+
+      delete updatedShop.latitude;
+      delete updatedShop.longitude;
+      updatedShop.distance = distance;
+
+      return updatedShop;
+    });
+
     /**
      * Shops Found
      */
     const returnData = {
-      shops,
+      shops: shopData,
     };
 
     return res.status(200).send(returnData);
@@ -90,7 +117,12 @@ const getShopsAction = async (req, res) => {
  * @returns object
  */
 const getShopByIdAction = async (req, res) => {
+  /**
+   * Dsstructuring Params
+   */
   const { id } = req.params;
+  const { latitude, longitude, pincode } = req.query;
+
   try {
     const response = await Services.ShopsService.getShopById(id, {
       attributes,
@@ -106,12 +138,37 @@ const getShopByIdAction = async (req, res) => {
       return res.status(404).send(returnResponse);
     }
 
+    if (response.dataValues.pincode !== pincode) {
+      return res.status(404).send({
+        error: 'Sorry the Shop Cannot deliever to your address',
+      });
+    }
+
     /**
      * Shop Found
      */
-    const returnData = response;
+    const updatedShop = response.dataValues;
 
-    return res.status(200).send(returnData);
+    const userLocation = {
+      latitude,
+      longitude,
+    };
+
+    const shopLocation = {
+      latitude: updatedShop.latitude,
+      longitude: updatedShop.longitude,
+    };
+
+    const distance = Helpers.DistanceHelper.getDistanceOfShop(
+      userLocation,
+      shopLocation
+    );
+
+    delete updatedShop.latitude;
+    delete updatedShop.longitude;
+    updatedShop.distance = distance;
+
+    return res.status(200).send(updatedShop);
   } catch (error) {
     /**
      * Error Occured

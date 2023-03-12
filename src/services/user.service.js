@@ -31,7 +31,7 @@ const getUserByEmail = (email) =>
  * @param { string } id
  * @returns object
  */
-const getUserById = (id) => UserModel.findByPk(id);
+const getUserById = (id, options) => UserModel.findByPk(id, options);
 
 export default {
   getUserByEmail,

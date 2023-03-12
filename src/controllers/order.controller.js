@@ -1,6 +1,7 @@
 import sequelize from 'sequelize';
 import Services from '../services';
 import database from '../database';
+import Helpers from '../utils/helpers';
 
 const Operator = sequelize.Op;
 const DATABASE = database;
@@ -34,6 +35,8 @@ const getOrdersAction = async (req, res) => {
   const pageInfo = req.body.page_info;
   delete req.body.limit;
   delete req.body.page_info;
+
+  req.body.draft = false;
 
   /**
    * Filter Data
@@ -98,6 +101,7 @@ const getOrderByIdAction = async (req, res) => {
       where: {
         order_group_id: req.body.order_group_id,
         customer_id: req.body.customer_id,
+        draft: false,
       },
       attributes,
       group: ['shop_id'],
@@ -185,6 +189,28 @@ const getOrderByIdAction = async (req, res) => {
  * Prepare Order Data
  */
 const prepareOrderData = async (body) => {
+  const { delieveryAddress } = body;
+
+  const addressFilter = {
+    where: {
+      id: delieveryAddress,
+      user_id: body.customer_id,
+    },
+  };
+
+  const verfiedAddress = await Services.UserAddressService.getAddressById(
+    addressFilter
+  );
+
+  if (verfiedAddress === null) {
+    return null;
+  }
+
+  const userLocation = {
+    latitude: verfiedAddress.dataValues.latitude,
+    longitude: verfiedAddress.dataValues.longitude,
+  };
+
   /**
    * Order Group ID
    */
@@ -206,6 +232,31 @@ const prepareOrderData = async (body) => {
       if (!order) {
         return false;
       }
+
+      const shop = await Services.ShopsService.getShopById(order.shop_id);
+
+      if (shop === null) {
+        return false;
+      }
+
+      const shopLocation = {
+        latitude: shop.dataValues.latitude,
+        longitude: shop.dataValues.longitude,
+      };
+
+      const distance = await Helpers.DistanceHelper.getDistanceOfShop(
+        userLocation,
+        shopLocation
+      );
+
+      /**
+       * If distance is more than the shop services
+       */
+      if (distance > shop.dataValues.home_delievery_distance * 1000) {
+        return false;
+      }
+
+      const delieveryCharge = shop.dataValues.home_delievery_cost * distance;
 
       const orderId = `${groupId} - ${order.shop_id}`;
       let totalAmount = 0;
@@ -250,6 +301,7 @@ const prepareOrderData = async (body) => {
               customer_id: body.customer_id,
               price: inventory.price,
               quantity: item.quantity,
+              inventory_id: item.item_id,
             },
             inventoryData: {
               inventory_id: item.item_id,
@@ -278,6 +330,8 @@ const prepareOrderData = async (body) => {
           amount: totalAmount,
           order_group_id: groupId,
           shop_id: order.shop_id,
+          delievery_charge: delieveryCharge,
+          delievery_address: delieveryAddress,
         },
         shopItems,
       };
@@ -285,6 +339,8 @@ const prepareOrderData = async (body) => {
       return shopData;
     })
   );
+
+  finalData.orderId = groupId;
 
   return finalData;
 };
@@ -301,18 +357,36 @@ const createOrderAction = async (req, res) => {
    */
   const preparedData = await prepareOrderData(req.body);
 
+  if (preparedData === null) {
+    return res.status(404).send({
+      error: 'Address is not associated with user',
+    });
+  }
+
+  /**
+   * Order Group Id
+   */
+  const groupId = preparedData.orderId;
+
   /**
    * Start Transaction
    */
   const t = await DATABASE.transaction();
+  let orderPlaced = true;
+
   try {
-    preparedData.forEach(async (order) => {
+    preparedData.map(async (order) => {
+      if (!order && orderPlaced) {
+        orderPlaced = false;
+        return false;
+      }
+
       const { orderData, shopItems } = order;
 
       /**
        * Create Order
        */
-      await Services.OrderService.createOrder(orderData, t);
+      await Services.OrderService.createOrder(orderData, { t });
 
       /**
        * Create Order Items
@@ -327,7 +401,7 @@ const createOrderAction = async (req, res) => {
 
         await Services.OrderItemService.createOrderItem(
           shopItem.orderItemData,
-          t
+          { t }
         );
 
         const { inventoryData } = shopItem;
@@ -344,6 +418,12 @@ const createOrderAction = async (req, res) => {
       });
     });
 
+    if (!orderPlaced) {
+      return res.status(404).send({
+        error: 'Order Could Not be Placed. Please check the data',
+      });
+    }
+
     /**
      * Commiting Transaction
      */
@@ -351,6 +431,7 @@ const createOrderAction = async (req, res) => {
 
     const returnData = {
       message: 'Order Placed Successfully',
+      order_id: groupId,
     };
 
     return res.status(201).send(returnData);
@@ -372,8 +453,210 @@ const createOrderAction = async (req, res) => {
   }
 };
 
+/**
+ * Confirm Order Payment
+ * @param {object} req
+ * @param {object} res
+ * @returns object
+ */
+const confirmOrderAction = async (req, res) => {
+  const orderId = req.body.order_group_id;
+  const customerId = req.body.customer_id;
+
+  /**
+   * Filter Data
+   */
+  const filter = {
+    where: {
+      order_id: orderId,
+      customer_id: customerId,
+      draft: true,
+    },
+    attributes,
+  };
+
+  try {
+    /**
+     * Data to Update
+     */
+    const data = {
+      transaction_id: req.body.transaction_id,
+      draft: false,
+    };
+
+    /**
+     * Hitting Service
+     */
+    const order = await Services.OrderService.updateOrder(data, filter);
+
+    if (order === null) {
+      return res.status(400).send({
+        error: 'Order Not Found',
+      });
+    }
+
+    return res.status(201).send({
+      message: 'Order Confirmed Successfully',
+    });
+  } catch (error) {
+    return res.status(500).send({
+      error: 'An error Occured while confirm the Order',
+      data: error,
+    });
+  }
+};
+
+/**
+ * Prepare Cancel Data
+ */
+const cancelOrder = async (orders) => {
+  const finalData = await Promise.all(
+    orders.map(async (order) => {
+      const orderData = order.dataValues;
+
+      const orderItemsFilter = {
+        where: {
+          order_id: orderData.order_id,
+        },
+      };
+      const orderItems = await Services.OrderItemService.getOrderItems(
+        orderItemsFilter
+      );
+
+      if (orderItems === null) {
+        return false;
+      }
+
+      const preparedData = orderItems.map((item) => {
+        return {
+          item_id: item.item_id,
+          quantity: item.quantity,
+          inventory_id: item.inventory_id,
+        };
+      });
+
+      return preparedData;
+    })
+  );
+
+  return finalData;
+};
+
+/**
+ * Delete Order (Payment Failed)
+ * @param {objectDelete Order (Payment Failed)} req
+ * @param {object} res
+ */
+const deleteOrderAction = async (req, res) => {
+  const orderId = req.body.order_group_id;
+  const customerId = req.body.customer_id;
+
+  const t = await DATABASE.transaction();
+
+  try {
+    const orders = await Services.OrderService.getAllOrders({
+      where: {
+        order_group_id: orderId,
+        draft: true,
+        customer_id: customerId,
+      },
+    });
+
+    if (orders === null) {
+      return res.status(400).send({
+        error: 'Order not Found',
+      });
+    }
+
+    const preparedData = await cancelOrder(orders);
+
+    await Promise.all(
+      preparedData.map(async (shop) => {
+        await Promise.all(
+          shop.map(async (item) => {
+            /**
+             * Get Item from Inventory
+             */
+            const inventory = await Services.InventoryService.getInventory({
+              where: { inventory_id: item.inventory_id },
+              t,
+            });
+
+            const inventoryUpdateData = {
+              quantity: item.quantity + inventory.quantity,
+            };
+
+            /**
+             * If Stock is false
+             */
+            if (!inventory.in_stock) {
+              inventoryUpdateData.in_stock = true;
+            }
+
+            /**
+             * Restoring Inventory
+             */
+            await Services.InventoryService.updateInventory(
+              inventoryUpdateData,
+              {
+                where: { inventory_id: item.inventory_id },
+                t,
+              }
+            );
+
+            /**
+             * Deleting Item from Order Items
+             */
+            await Services.OrderItemService.deleteOrderItemId({
+              where: {
+                item_id: item.item_id,
+              },
+              t,
+            });
+          })
+        );
+      })
+    );
+
+    /**
+     * Deleting Order from Table
+     */
+    await Services.OrderService.deleteOrderById({
+      where: {
+        order_group_id: orderId,
+      },
+      t,
+    });
+
+    /**
+     * Commiting Transaction
+     */
+    await t.commit();
+
+    return res.status(204).send({
+      message: 'Order Deleted Successfully',
+    });
+  } catch (error) {
+    /**
+     * Rolling Back Transaction
+     */
+    await t.rollback();
+    /**
+     * Error Occured
+     */
+    const response = {
+      error: 'An error Occured while deleting Order',
+      data: error,
+    };
+
+    return res.status(502).send(response);
+  }
+};
+
 export default {
   getOrdersAction,
   createOrderAction,
   getOrderByIdAction,
+  confirmOrderAction,
+  deleteOrderAction,
 };

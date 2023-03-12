@@ -15,6 +15,9 @@ const getShopsValidator = async (req, res, next) => {
     active: Joi.boolean().default(true),
     page_info: Joi.number().default(0),
     limit: Joi.number().min(1).max(10).default(5),
+    latitude: Joi.number().precision(10).required(),
+    longitude: Joi.number().precision(10).required(),
+    pincode: Joi.string().min(5).max(8).required(),
   });
 
   const isValidQuery = querySchema.validate(req.query);
@@ -56,18 +59,26 @@ const getShopValidator = async (req, res, next) => {
   const paramSchema = Joi.object({
     id: Joi.string().min(3).max(255).required(),
   });
+  const querySchema = Joi.object({
+    latitude: Joi.number().precision(10).required(),
+    longitude: Joi.number().precision(10).required(),
+    pincode: Joi.string().min(5).max(8).required(),
+  });
 
   const isValidParam = paramSchema.validate(req.params);
+  const isValidQuery = querySchema.validate(req.query);
 
   /**
    * If Request is valid
    */
-  if (!isValidParam?.error) {
+  if (!isValidParam?.error && !isValidQuery?.error) {
     // Proceed to Route
     next();
   } else {
     return res.status(400).send({
-      error: isValidParam.error.details[0].message,
+      error:
+        isValidQuery?.error.details[0].message ||
+        isValidParam?.error.details[0].message,
     });
   }
 };
