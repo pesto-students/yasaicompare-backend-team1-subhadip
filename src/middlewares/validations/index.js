@@ -6,6 +6,7 @@ import orderValidation from './order.validation';
 import vendorValidation from './vendor.validation';
 import categoryValidation from './category.validation';
 import cartValidation from './cart.validation';
+import imageValidation from './image.validation';
 
 export default {
   authValidation,
@@ -16,4 +17,5 @@ export default {
   vendorValidation,
   cartValidation,
   categoryValidation,
+  imageValidation,
 };

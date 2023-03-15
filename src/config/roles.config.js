@@ -1,5 +1,11 @@
 const roles = {
-  customer: ['create_order', 'get_orders_customer', 'create_order', 'cart'],
+  customer: [
+    'create_order',
+    'get_orders_customer',
+    'create_order',
+    'cart',
+    'upload_profile_image',
+  ],
   vendor: [
     'create_shop',
     'get_shops',
@@ -8,6 +14,8 @@ const roles = {
     'update_inventory',
     'get_owners_shop',
     'get_shop_orders',
+    'upload_profile_image',
+    'upload_item_image',
   ],
 };
 
