@@ -1,9 +1,11 @@
 import express from 'express';
 import Controllers from '../controllers';
 import Middleware from '../middlewares';
+import Validations from '../middlewares/validations';
 
 const ShopsRouter = express.Router();
-const AuthMiddleware = Middleware.authMiddleware;
+const { authMiddleware } = Middleware;
+const errorMessage = { message: 'Access Forbidden' };
 
 /**
  * 
@@ -11,11 +13,11 @@ const AuthMiddleware = Middleware.authMiddleware;
  */
 
 /**
- * Get All the Shops of the Vendor
+ * Get All the Shops of the (Vendor)
  */
 ShopsRouter.get(
   '/',
-  AuthMiddleware.auth('get_shops'),
+  Validations.shopsValidation.getShopsValidator,
   Controllers.ShopsController.getShopsAction
 );
 
@@ -24,8 +26,24 @@ ShopsRouter.get(
  */
 ShopsRouter.get(
   '/:id',
-  AuthMiddleware.auth('get_shops'),
+  Validations.shopsValidation.getShopValidator,
   Controllers.ShopsController.getShopByIdAction
+);
+
+/**
+ * 
+    ============================ PUT METHODS ======================================
+ */
+
+/**
+ * Update A Shop (Vendor)
+ */
+ShopsRouter.put(
+  '/:id',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('update_shop'),
+  Validations.shopsValidation.updateShopValidator,
+  Controllers.ShopsController.updateShopAction
 );
 
 /**
@@ -34,12 +52,49 @@ ShopsRouter.get(
  */
 
 /**
- * Register A Shop Vendor
+ * Register A Shop (Vendor)
  */
 ShopsRouter.post(
-  '/create',
-  AuthMiddleware.auth('create_shop'),
-  Controllers.ShopsController.createShopAction
+  '/register',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('create_shop'),
+  Validations.shopsValidation.registerShopValidator,
+  Controllers.ShopsController.registerShopAction
 );
+
+/**
+ * Error Routes
+ */
+ShopsRouter.get('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ShopsRouter.head('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ShopsRouter.post('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ShopsRouter.put('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ShopsRouter.delete('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ShopsRouter.connect('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ShopsRouter.options('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+ShopsRouter.trace('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
 
 export default ShopsRouter;

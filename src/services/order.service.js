@@ -28,9 +28,24 @@ const getOrderById = (filter) => OrderModel.findAll(filter);
  */
 const getOrdersCount = (filter) => OrderModel.count(filter);
 
+/**
+ * Update Order
+ * @returns object
+ */
+const updateOrder = (data, filter) => OrderModel.update(data, filter);
+
+/**
+ * Delete Order
+ * @param {object} filter
+ * @returns
+ */
+const deleteOrderById = (filter) => OrderModel.destroy(filter);
+
 export default {
   getAllOrders,
   createOrder,
   getOrderById,
   getOrdersCount,
+  updateOrder,
+  deleteOrderById,
 };

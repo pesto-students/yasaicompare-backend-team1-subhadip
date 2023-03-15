@@ -1,9 +1,7 @@
 import { Sequelize } from 'sequelize';
-import config from '../config';
+import database from '../database';
 
-const { DATABASE } = config;
-
-const OrderModel = DATABASE.define(
+const OrderModel = database.define(
   'order',
   {
     order_id: {
@@ -22,6 +20,11 @@ const OrderModel = DATABASE.define(
       allowNull: false,
       uniqueKey: false,
     },
+    delievery_address: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      uniqueKey: false,
+    },
     amount: {
       type: Sequelize.DOUBLE,
       allowNull: false,
@@ -29,9 +32,9 @@ const OrderModel = DATABASE.define(
     },
     order_status: {
       type: Sequelize.STRING,
-      enum: ['pending, confirmed, in_transit, delievered'],
+      enum: ['draft', 'pending, confirmed, in_transit, delievered'],
       allowNull: false,
-      defaultValue: 'pending',
+      defaultValue: 'draft',
     },
     payment_status: {
       type: Sequelize.STRING,
@@ -52,6 +55,15 @@ const OrderModel = DATABASE.define(
       type: Sequelize.DOUBLE,
       allowNull: false,
       defaultValue: 0.0,
+    },
+    draft: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    payment_intent: {
+      type: Sequelize.STRING,
+      allowNull: false,
     },
   },
   {

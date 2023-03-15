@@ -23,16 +23,8 @@ const checkRoleAccess = (req, res, next, accessRights, user) => {
   return false;
 };
 
-const fetchUser = async (jwt) => {
-  if (!Object.keys(jwt).length) {
-    return false;
-  }
-
-  if (!Object.prototype.hasOwnProperty.call(jwt.data, 'user_id')) {
-    return false;
-  }
-
-  const getUser = await UserService.getUserById(jwt.data.user_id);
+const fetchUser = async (userId) => {
+  const getUser = await UserService.getUserById(userId);
   if (getUser === null) {
     return false;
   }
@@ -43,40 +35,67 @@ const fetchUser = async (jwt) => {
   };
 };
 
-const auth =
+const authorize =
   (...accessRights) =>
+  // eslint-disable-next-line consistent-return
   async (req, res, next) => {
-    const response = {
-      success: false,
-    };
+    try {
+      const { userId } = req.body;
+      const user = await fetchUser(userId);
 
+      if (!user) {
+        return res.status(400).send({
+          error: 'Access Forbidden',
+        });
+      }
+
+      const isAllowed = checkRoleAccess(req, res, next, accessRights, user);
+
+      if (isAllowed) {
+        next();
+      } else {
+        return res.status(403).send({
+          error: 'Access Forbidden',
+        });
+      }
+    } catch (error) {
+      return res.status(500).send({
+        error: 'Some Error Occured while Authorization User',
+        data: error,
+      });
+    }
+  };
+
+// eslint-disable-next-line consistent-return
+const authenticate = async (req, res, next) => {
+  try {
     const token = Helper.Validator.headerValidator(req);
     if (!token) {
-      response.message = 'Required Authorization Token';
-      res.locals.errorMessage = JSON.stringify(response);
-      res.status(401).send(response);
-      return;
+      return res.status(401).send({ error: 'Required Authorization Token' });
     }
 
     const jwtDecoded = await Helper.JWT.decodeJWTToken(token);
     if (!jwtDecoded.success) {
-      res.locals.errorMessage = JSON.stringify(jwtDecoded);
-      res.status(401).send(jwtDecoded);
-      return;
+      return res.status(401).send({
+        error: jwtDecoded.error,
+        data: jwtDecoded.data,
+      });
     }
 
-    const user = await fetchUser(jwtDecoded);
-    const isAllowed = checkRoleAccess(req, res, next, accessRights, user);
-
-    if (isAllowed) {
-      next();
-    } else {
-      response.message = 'Access Forbidden';
-      res.locals.errorMessage = JSON.stringify(response);
-      res.status(403).send(response);
-    }
-  };
+    /**
+     * Adding user_id in Request for Authorization
+     */
+    req.body.userId = jwtDecoded.data.user_id;
+    next();
+  } catch (error) {
+    return res.status(500).send({
+      error: 'Some Error Occured while authenticating User',
+      data: error,
+    });
+  }
+};
 
 export default {
-  auth,
+  authorize,
+  authenticate,
 };

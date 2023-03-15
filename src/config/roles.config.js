@@ -1,6 +1,22 @@
 const roles = {
-  customer: ['create_order', 'get_inventory', 'get_orders'],
-  vendor: ['create_shop', 'get_shops', 'create_inventory', 'get_inventory'],
+  customer: [
+    'create_order',
+    'get_orders_customer',
+    'create_order',
+    'cart',
+    'upload_profile_image',
+  ],
+  vendor: [
+    'create_shop',
+    'get_shops',
+    'update_shop',
+    'create_inventory',
+    'update_inventory',
+    'get_owners_shop',
+    'get_shop_orders',
+    'upload_profile_image',
+    'upload_item_image',
+  ],
 };
 
 const rolesList = Object.keys(roles);

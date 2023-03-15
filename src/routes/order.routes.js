@@ -1,9 +1,11 @@
 import express from 'express';
 import Controllers from '../controllers';
 import Middleware from '../middlewares';
+import Validations from '../middlewares/validations';
 
 const OrderRouter = express.Router();
-const AuthMiddleware = Middleware.authMiddleware;
+const { authMiddleware } = Middleware;
+const errorMessage = { message: 'Access Forbidden' };
 
 /**
  * 
@@ -15,7 +17,9 @@ const AuthMiddleware = Middleware.authMiddleware;
  */
 OrderRouter.get(
   '/',
-  AuthMiddleware.auth('get_orders'),
+  authMiddleware.authenticate,
+  authMiddleware.authorize('get_orders_customer'),
+  Validations.orderValidation.getOrdersValidator,
   Controllers.OrderController.getOrdersAction
 );
 
@@ -24,7 +28,9 @@ OrderRouter.get(
  */
 OrderRouter.get(
   '/:id',
-  AuthMiddleware.auth('get_orders'),
+  authMiddleware.authenticate,
+  authMiddleware.authorize('get_orders_customer'),
+  Validations.orderValidation.getOrderValidator,
   Controllers.OrderController.getOrderByIdAction
 );
 
@@ -38,8 +44,72 @@ OrderRouter.get(
  */
 OrderRouter.post(
   '/create',
-  AuthMiddleware.auth('create_order'),
+  authMiddleware.authenticate,
+  authMiddleware.authorize('create_order'),
+  Validations.orderValidation.createOrderValidator,
   Controllers.OrderController.createOrderAction
 );
+
+/**
+ * Confirm An Order
+ */
+OrderRouter.post(
+  '/confirm_order',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('create_order'),
+  Validations.orderValidation.confirmOrderValidator,
+  Controllers.OrderController.confirmOrderAction
+);
+
+/**
+ * 
+    ============================ DELETE METHODS ======================================
+ */
+
+/**
+ * Delete An Order (Payment Failed)
+ */
+OrderRouter.delete(
+  '/:id',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('create_order'),
+  Validations.orderValidation.deleteOrderValidator,
+  Controllers.OrderController.deleteOrderAction
+);
+
+/**
+ * Error Routes
+ */
+OrderRouter.get('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+OrderRouter.head('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+OrderRouter.post('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+OrderRouter.put('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+OrderRouter.delete('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+OrderRouter.connect('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+OrderRouter.options('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
+
+OrderRouter.trace('*', (req, res) => {
+  res.status(404).send(errorMessage);
+});
 
 export default OrderRouter;

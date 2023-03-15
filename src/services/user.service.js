@@ -15,15 +15,14 @@ const getAllUsers = () => UserModel.findAll();
 const createUser = (data) => UserModel.create(data);
 
 /**
- * Get User By Email & Password
- * @param { string } id
+ * Get User By Email
+ * @param { string } email
  * @returns object
  */
-const loginUser = (email, password) =>
+const getUserByEmail = (email) =>
   UserModel.findOne({
     where: {
       email,
-      password,
     },
   });
 
@@ -32,10 +31,10 @@ const loginUser = (email, password) =>
  * @param { string } id
  * @returns object
  */
-const getUserById = (id) => UserModel.findByPk(id);
+const getUserById = (id, options) => UserModel.findByPk(id, options);
 
 export default {
-  loginUser,
+  getUserByEmail,
   getAllUsers,
   getUserById,
   createUser,

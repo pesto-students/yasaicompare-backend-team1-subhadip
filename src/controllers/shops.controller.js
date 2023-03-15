@@ -1,37 +1,51 @@
-// import querystring from 'querystring';
 import Services from '../services';
 import Helpers from '../utils/helpers';
 
+/**
+ * Attributes for Shop to return
+ */
+const attributes = [
+  'shop_id',
+  'name',
+  'address',
+  'city',
+  'state',
+  'pincode',
+  'country',
+  'gstin',
+  'home_delievery_distance',
+  'home_delievery_cost',
+  'image',
+  'longitude',
+  'latitude',
+  'active',
+];
+
+/**
+ * Get All Shops (vendor)
+ * @param {object} req
+ * @param {object} res
+ * @returns object
+ */
 const getShopsAction = async (req, res) => {
   /**
-   * JWT Token Decoded
+   * Destructuring Query
    */
-  const tokenData = await Helpers.JWT.decodeJWTToken(
-    Helpers.Validator.headerValidator(req)
-  );
+  const { active, limit, latitude, longitude, pincode } = req.body;
+  const pageInfo = req.body.page_info;
 
   /**
    * Filter Data
    */
   const filter = {
     where: {
-      owner_id: tokenData.data.user_id,
+      active,
+      pincode,
     },
-    attributes: [
-      'shop_id',
-      'name',
-      'home_delievery_distance',
-      'home_delievery_cost',
-      'active',
-    ],
+    attributes,
+    offset: pageInfo,
+    limit,
   };
-
-  /**
-   * If Status Check Set
-   */
-  if (Object.prototype.hasOwnProperty.call(req.query, 'active')) {
-    filter.where.active = req.query.active === true || req.query.active === "true";
-  }
 
   try {
     /**
@@ -44,22 +58,42 @@ const getShopsAction = async (req, res) => {
      */
     if (shops === null) {
       const returnResponse = {
-        success: false,
-        message: 'Shop(s) not found',
+        error: 'Shop(s) not found',
       };
-      res.locals.errorMessage = JSON.stringify(returnResponse);
       return res.status(404).send(returnResponse);
     }
+
+    const shopData = shops.map((shop) => {
+      const updatedShop = shop.dataValues;
+
+      const userLocation = {
+        latitude,
+        longitude,
+      };
+
+      const shopLocation = {
+        latitude: updatedShop.latitude,
+        longitude: updatedShop.longitude,
+      };
+
+      const distance = Helpers.DistanceHelper.getDistanceOfShop(
+        userLocation,
+        shopLocation
+      );
+
+      delete updatedShop.latitude;
+      delete updatedShop.longitude;
+      updatedShop.distance = distance;
+
+      return updatedShop;
+    });
 
     /**
      * Shops Found
      */
     const returnData = {
-      success: true,
-      message: `Shop(s) Found`,
-      data: shops,
+      shops: shopData,
     };
-    res.locals.errorMessage = JSON.stringify(returnData);
 
     return res.status(200).send(returnData);
   } catch (error) {
@@ -67,8 +101,7 @@ const getShopsAction = async (req, res) => {
      * Error Occured
      */
     const response = {
-      success: false,
-      message: 'An error Occured while retrieving Shop(s)',
+      error: 'An error Occured while retrieving Shop(s)',
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
@@ -84,45 +117,64 @@ const getShopsAction = async (req, res) => {
  * @returns object
  */
 const getShopByIdAction = async (req, res) => {
-  if (!Object.prototype.hasOwnProperty.call(req.params, 'id')) {
-    const validationResponse = { success: false, message: 'Id is Required' };
-    res.locals.errorMessage = JSON.stringify(validationResponse);
-    return res.status(400).send(validationResponse);
-  }
+  /**
+   * Dsstructuring Params
+   */
+  const { id } = req.params;
+  const { latitude, longitude, pincode } = req.query;
 
   try {
-    const response = await Services.ShopsService.getShopById(req.params.id);
+    const response = await Services.ShopsService.getShopById(id, {
+      attributes,
+    });
 
     /**
      * If Shop Could Not be Found
      */
     if (response === null) {
       const returnResponse = {
-        success: false,
-        message: 'Shop not found',
+        error: 'Shop not found',
       };
-      res.locals.errorMessage = JSON.stringify(returnResponse);
       return res.status(404).send(returnResponse);
+    }
+
+    if (response.dataValues.pincode !== pincode) {
+      return res.status(404).send({
+        error: 'Sorry the Shop Cannot deliever to your address',
+      });
     }
 
     /**
      * Shop Found
      */
-    const returnData = {
-      success: true,
-      message: `Shop Found`,
-      data: response,
-    };
-    res.locals.errorMessage = JSON.stringify(returnData);
+    const updatedShop = response.dataValues;
 
-    return res.status(200).send(returnData);
+    const userLocation = {
+      latitude,
+      longitude,
+    };
+
+    const shopLocation = {
+      latitude: updatedShop.latitude,
+      longitude: updatedShop.longitude,
+    };
+
+    const distance = Helpers.DistanceHelper.getDistanceOfShop(
+      userLocation,
+      shopLocation
+    );
+
+    delete updatedShop.latitude;
+    delete updatedShop.longitude;
+    updatedShop.distance = distance;
+
+    return res.status(200).send(updatedShop);
   } catch (error) {
     /**
      * Error Occured
      */
     const response = {
-      success: false,
-      message: 'An error Occured while retrieving Shop',
+      error: 'An error Occured while retrieving Shop',
       data: error,
     };
     res.locals.errorMessage = JSON.stringify(response);
@@ -132,121 +184,27 @@ const getShopByIdAction = async (req, res) => {
 };
 
 /**
- * Create / Update Shop Parameter
- * @param {object} request
- * @returns object
- */
-const createUpdateShopParamValidator = async (request) => {
-  /**
-   * ValidationResponse
-   */
-  let response = {
-    success: false,
-  };
-
-  const object = request.body;
-
-  /**
-   * Missing Shop Name
-   */
-  if (!Object.prototype.hasOwnProperty.call(object, 'name')) {
-    response.message = 'Shop Name is Required';
-    return response;
-  }
-
-  /**
-   * Missing Address
-   */
-  if (
-    !Object.prototype.hasOwnProperty.call(object, 'address') ||
-    !Object.prototype.hasOwnProperty.call(object, 'city') ||
-    !Object.prototype.hasOwnProperty.call(object, 'state') ||
-    !Object.prototype.hasOwnProperty.call(object, 'pincode') ||
-    !Object.prototype.hasOwnProperty.call(object, 'country')
-  ) {
-    response.message = 'Shop Address is Required';
-    return response;
-  }
-
-  /**
-   * Validating Owner Id
-   */
-  const tokenData = await Helpers.JWT.decodeJWTToken(
-    Helpers.Validator.headerValidator(request)
-  );
-
-  response = {
-    success: true,
-    data: {
-      name: object.name,
-      address: object.address,
-      city: object.city,
-      state: object.state,
-      pincode: object.pincode,
-      country: object.country,
-      owner_id: tokenData.data.user_id,
-    },
-  };
-
-  /**
-   * If Set GSTIN
-   */
-  if (Object.prototype.hasOwnProperty.call(object, 'gstin')) {
-    response.data.home_delievery_cost = object.gstin;
-  }
-
-  /**
-   * If Set home_delievery_cost
-   */
-  if (Object.prototype.hasOwnProperty.call(object, 'home_delievery_cost')) {
-    response.data.home_delievery_cost = object.home_delievery_cost;
-  }
-
-  /**
-   * If Set home_delievery_distance
-   */
-  if (Object.prototype.hasOwnProperty.call(object, 'home_delievery_distance')) {
-    response.data.home_delievery_distance = object.home_delievery_distance;
-  }
-
-  /**
-   * If Set shop_status
-   */
-  if (Object.prototype.hasOwnProperty.call(object, 'active')) {
-    response.data.active = object.active === true || object.active === "true";
-  }
-
-  return response;
-};
-
-/**
- * Create shop
+ * Create shop (vendor)
  * @param {object} req
  * @param {object} res
  * @returns object
  */
-const createShopAction = async (req, res) => {
+const registerShopAction = async (req, res) => {
   /**
-   * Params Validation
+   * Destructuring Body
    */
-  const validation = await createUpdateShopParamValidator(req);
-  if (!validation.success) {
-    res.locals.errorMessage = JSON.stringify(validation);
-    return res.status(400).send(validation);
-  }
+  const { body } = req;
 
   try {
-    const response = await Services.ShopsService.createShop(validation.data);
+    const response = await Services.ShopsService.createShop(body);
 
     /**
      * If Shop Could Not be created
      */
-    const returnResponse = {
-      success: false,
-      message: 'Shop Could not be created',
-    };
-    res.locals.errorMessage = JSON.stringify(returnResponse);
     if (response === null) {
+      const returnResponse = {
+        error: 'Shop Could not be created',
+      };
       return res.status(500).send(returnResponse);
     }
 
@@ -254,11 +212,8 @@ const createShopAction = async (req, res) => {
      * Shop Created Successfully
      */
     const returnData = {
-      success: true,
       message: 'Shop Created Successfully',
-      data: response,
     };
-    res.locals.errorMessage = JSON.stringify(returnData);
 
     return res.status(201).send(returnData);
   } catch (error) {
@@ -266,11 +221,60 @@ const createShopAction = async (req, res) => {
      * Error Occured
      */
     const response = {
-      success: false,
-      message: 'An error Occured while creating Shop',
+      error: 'An error Occured while creating Shop',
       data: error,
     };
-    res.locals.errorMessage = JSON.stringify(response);
+
+    return res.status(502).send(response);
+  }
+};
+
+/**
+ * Update shop (vendor)
+ * @param {object} req
+ * @param {object} res
+ * @returns object
+ */
+const updateShopAction = async (req, res) => {
+  /**
+   * Destructuring Body
+   */
+  const { body } = req.body;
+
+  const filter = {
+    where: req.body.filter,
+    attributes,
+  };
+
+  try {
+    const response = await Services.ShopsService.updateShopById(body, filter);
+
+    /**
+     * If Shop Could Not be updated
+     */
+    if (response === null) {
+      const returnResponse = {
+        error: 'Shop Could not be updated',
+      };
+      return res.status(500).send(returnResponse);
+    }
+
+    /**
+     * Shop Created Successfully
+     */
+    const returnData = {
+      message: 'Shop updated Successfully',
+    };
+
+    return res.status(201).send(returnData);
+  } catch (error) {
+    /**
+     * Error Occured
+     */
+    const response = {
+      error: 'An error Occured while updating Shop',
+      data: error,
+    };
 
     return res.status(502).send(response);
   }
@@ -278,6 +282,7 @@ const createShopAction = async (req, res) => {
 
 export default {
   getShopsAction,
-  createShopAction,
+  registerShopAction,
   getShopByIdAction,
+  updateShopAction,
 };
