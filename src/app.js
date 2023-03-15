@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import https from 'https';
 import fs from 'fs';
+import fileUpload from 'express-fileupload';
 import path from 'path';
 import config from './config';
 import database from './database';
@@ -20,6 +21,7 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(successHandler);
 app.use(errorHandler);
+app.use(fileUpload());
 
 app.use('/', Routes);
 
