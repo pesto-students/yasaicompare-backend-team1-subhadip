@@ -10,6 +10,7 @@ const orderAttributes = [
   'order_status',
   'payment_status',
   'delievery_charge',
+  'rejection_reason',
   'createdAt',
   'updatedAt',
 ];
@@ -243,9 +244,54 @@ const getOrderByIdAction = async (req, res) => {
   }
 };
 
+/**
+ * Update Shop Order By ID
+ * @param {object} req
+ * @param {object} res
+ * @returns object
+ */
+const updateOrderByIdAction = async (req, res) => {
+  const { filter, data } = req.body;
+  try {
+    /**
+     * Filter
+     */
+    const filterData = {
+      where: filter,
+      attributes: orderAttributes,
+    };
+
+    /**
+     * Get Order Id from DB
+     */
+    const response =  await Services.OrderService.updateOrder(data, filterData);
+
+    /**
+     * If Order Could Not be Found
+     */
+    if (response === null) {
+      return res.status(404).send({
+        error: 'Order not found',
+      });
+    }
+
+    const returnData = {
+      response,
+    };
+
+    return res.status(200).send(returnData);
+  } catch (error) {
+    return res.status(500).send({
+      error: 'Some Error ocured while retrieveing Order',
+      data: error,
+    });
+  }
+};
+
 export default {
   getShopsAction,
   getShopByIdAction,
   getOrdersAction,
   getOrderByIdAction,
+  updateOrderByIdAction,
 };

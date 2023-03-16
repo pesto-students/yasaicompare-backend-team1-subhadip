@@ -16,6 +16,7 @@ const roles = {
     'get_shop_orders',
     'upload_profile_image',
     'upload_item_image',
+    'update_shop_orders',
   ],
 };
 
