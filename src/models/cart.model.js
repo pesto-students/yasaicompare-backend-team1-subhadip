@@ -27,6 +27,21 @@ const CartModel = database.define(
       allowNull: false,
       defaultValue: 1,
     },
+    price: {
+      type: Sequelize.DOUBLE,
+      allowNull: false,
+      defaultValue: 1,
+    },
+    image: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      defaultValue: '',
+    },
+    image: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      defaultValue: '',
+    },
   },
   {
     timestamps: true,
