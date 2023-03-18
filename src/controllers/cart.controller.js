@@ -6,7 +6,15 @@ const Operator = sequelize.Op;
 /**
  * Attributes for Cart to return
  */
-const attributes = ['cart_id', 'shop_id', 'customer_id', 'item_id', 'quantity'];
+const attributes = [
+  'cart_id',
+  'shop_id',
+  'customer_id',
+  'item_id',
+  'quantity',
+  'price',
+  'image',
+];
 
 /**
  * Get All Cart Items
@@ -111,9 +119,13 @@ const addCartAction = async (req, res) => {
     const count = await Services.CartService.searchACartItem(cartFilter);
 
     if (count === null) {
+      body.price = body.quantity * inventory.price;
+      body.image = inventory.image;
       response = await Services.CartService.createCartItem(body);
     } else {
       req.body.quantity += count.quantity;
+      req.body.price = req.body.quantity * inventory.price;
+      req.body.image = inventory.image;
       response = await Services.CartService.updateCartItem(
         req.body,
         cartFilter
