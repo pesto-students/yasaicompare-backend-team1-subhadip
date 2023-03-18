@@ -216,7 +216,7 @@ const updateShopOrderValidator = async (req, res, next) => {
      * Updated Body Params as Required
      */
     const filter = isValidParam.value;
-    const data = isValidParam.value;
+    const data = isValidBody.value;
 
     req.body = {
       filter,
