@@ -252,6 +252,7 @@ const getOrderByIdAction = async (req, res) => {
  */
 const updateOrderByIdAction = async (req, res) => {
   const { filter, data } = req.body;
+
   try {
     /**
      * Filter
@@ -264,7 +265,7 @@ const updateOrderByIdAction = async (req, res) => {
     /**
      * Get Order Id from DB
      */
-    const response =  await Services.OrderService.updateOrder(data, filterData);
+    const response = await Services.OrderService.updateOrder(data, filterData);
 
     /**
      * If Order Could Not be Found
@@ -275,11 +276,9 @@ const updateOrderByIdAction = async (req, res) => {
       });
     }
 
-    const returnData = {
-      response,
-    };
-
-    return res.status(200).send(returnData);
+    return res.status(204).send({
+      message: 'Order Updated Successfully',
+    });
   } catch (error) {
     return res.status(500).send({
       error: 'Some Error ocured while retrieveing Order',

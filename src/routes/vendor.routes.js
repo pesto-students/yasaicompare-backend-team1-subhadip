@@ -68,8 +68,8 @@ VendorRouter.put(
   '/order/:shop_id/:order_id',
   authMiddleware.authenticate,
   authMiddleware.authorize('update_shop_orders'),
-  Validations.vendorValidation.getShopOrderValidator,
-  Controllers.VendorController.getShopByIdAction
+  Validations.vendorValidation.updateShopOrderValidator,
+  Controllers.VendorController.updateOrderByIdAction
 );
 
 /**

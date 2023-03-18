@@ -1,3 +1,4 @@
+import sequelize from 'sequelize';
 import Services from '../services';
 import Helpers from '../utils/helpers';
 
@@ -21,6 +22,8 @@ const attributes = [
   'active',
 ];
 
+const Operator = sequelize.Op;
+
 /**
  * Get All Shops (vendor)
  * @param {object} req
@@ -31,7 +34,7 @@ const getShopsAction = async (req, res) => {
   /**
    * Destructuring Query
    */
-  const { active, limit, latitude, longitude, pincode } = req.body;
+  const { active, limit, latitude, longitude, pincode, distance } = req.body;
   const pageInfo = req.body.page_info;
 
   /**
@@ -40,7 +43,9 @@ const getShopsAction = async (req, res) => {
   const filter = {
     where: {
       active,
-      pincode,
+      pincode: {
+        [Operator.between]: [pincode + distance, pincode - distance],
+      },
     },
     attributes,
     offset: pageInfo,
