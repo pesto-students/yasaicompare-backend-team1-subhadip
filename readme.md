@@ -45,3 +45,5 @@ Yasai Compare is an upcoming marketplace for Local Shopkeepers which helps them 
 - ALLOWED_ORIGINS = < http://localhost:3000,https://localhost:3000 >  
 - STRIPE_PUBLIC_KEY = < STRIPE PUBLIC KEY >  
 - STRIPE_PRIVATE_KEY = < STRIPE PRIVATE KEY >  
+
+## Postman: [Link To Api's & Documentation]('https://documenter.getpostman.com/view/25842856/2s93JzM1e4')
