@@ -226,7 +226,7 @@ const prepareOrderData = async (body) => {
   };
   const orderNumber = (await Services.OrderService.getOrdersCount(filter)) + 1;
   const groupId = `${body.customer_id} - ${orderNumber}`;
-  let finalAmount = 0;
+  let finalAmount = 0.50;
 
   const finalData = await Promise.all(
     body.orders.map(async (order) => {
@@ -377,14 +377,13 @@ const createOrderAction = async (req, res) => {
    * Order Group Id
    */
   const { groupId, totalAmount } = preparedData;
-
+  
   try {
     const paymentIntent = await Stripe.paymentIntents.create({
       amount: Math.round((totalAmount * 100).toFixed(2)),
       currency: 'inr',
     });
   } catch (error) {
-    console.log(error, Math.round((totalAmount * 100).toFixed(2)));
     return res.status(500).send({
       error: 'Stripe Error',
       data: error,
@@ -448,7 +447,7 @@ const createOrderAction = async (req, res) => {
 
     if (!orderPlaced) {
       return res.status(404).send({
-        error: 'Order Could Not be Placed. Please check the data',
+        error: 'Order Could Not be Placed. Item cannot be delieverd at your location',
       });
     }
 
