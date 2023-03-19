@@ -14,6 +14,7 @@ const attributes = [
   'quantity',
   'price',
   'image',
+  'name',
 ];
 
 /**
@@ -121,6 +122,7 @@ const addCartAction = async (req, res) => {
     if (count === null) {
       body.price = body.quantity * inventory.price;
       body.image = inventory.image;
+      body.name = inventory.name
       response = await Services.CartService.createCartItem(body);
     } else {
       req.body.quantity += count.quantity;

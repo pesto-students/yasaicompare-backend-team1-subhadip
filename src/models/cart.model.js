@@ -37,6 +37,11 @@ const CartModel = database.define(
       allowNull: false,
       defaultValue: '',
     },
+    name: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      defaultValue: '',
+    },
   },
   {
     timestamps: true,
