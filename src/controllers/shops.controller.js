@@ -43,9 +43,9 @@ const getShopsAction = async (req, res) => {
   const filter = {
     where: {
       active,
-      pincode: {
-        [Operator.between]: [pincode + distance, pincode - distance],
-      },
+      // pincode: {
+      //   [Operator.between]: [pincode + distance, pincode - distance],
+      // },
     },
     attributes,
     offset: pageInfo,
