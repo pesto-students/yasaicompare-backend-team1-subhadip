@@ -18,6 +18,7 @@ const getShopsValidator = async (req, res, next) => {
     latitude: Joi.number().precision(10).required(),
     longitude: Joi.number().precision(10).required(),
     pincode: Joi.string().min(5).max(8).required(),
+    distance: Joi.number().min(1).max(10).default(1),
   });
 
   const isValidQuery = querySchema.validate(req.query);

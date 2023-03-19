@@ -178,9 +178,65 @@ const getShopOrderValidator = async (req, res, next) => {
   }
 };
 
+/**
+ * Update Shop Order Validator
+ * @param {object} req
+ */
+// eslint-disable-next-line consistent-return
+const updateShopOrderValidator = async (req, res, next) => {
+  /**
+   * User ID set in Authentication
+   */
+  // const { userId } = req.body;
+  delete req.body.userId;
+
+  /**
+   * Param Schema
+   */
+  const paramSchema = Joi.object({
+    shop_id: Joi.string().min(3).max(100).required(),
+    order_id: Joi.string().min(3).max(100).required(),
+  });
+
+  /**
+   * Body Schema
+   */
+  const bodySchema = Joi.object({
+    order_status: Joi.string().min(3).max(50).required(),
+  });
+
+  const isValidParam = paramSchema.validate(req.params);
+  const isValidBody = bodySchema.validate(req.body);
+
+  /**
+   * Schema is Valid
+   */
+  if (!isValidParam?.error && !isValidBody?.error) {
+    /**
+     * Updated Body Params as Required
+     */
+    const filter = isValidParam.value;
+    const data = isValidBody.value;
+
+    req.body = {
+      filter,
+      data,
+    };
+
+    next();
+  } else {
+    return res.status(400).send({
+      error:
+        isValidParam.error.details[0].message ||
+        isValidBody.error.details[0].message,
+    });
+  }
+};
+
 export default {
   getShopValidator,
   getShopsValidator,
   getShopOrdersValidator,
   getShopOrderValidator,
+  updateShopOrderValidator,
 };

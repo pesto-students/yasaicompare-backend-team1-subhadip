@@ -51,7 +51,7 @@ OrderRouter.post(
 );
 
 /**
- * Confrim An Order
+ * Confirm An Order
  */
 OrderRouter.post(
   '/confirm_order',

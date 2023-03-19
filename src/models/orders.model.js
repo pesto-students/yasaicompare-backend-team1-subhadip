@@ -32,7 +32,7 @@ const OrderModel = database.define(
     },
     order_status: {
       type: Sequelize.STRING,
-      enum: ['draft', 'pending, confirmed, in_transit, delievered'],
+      enum: ['draft', 'pending, confirmed, in_transit, delievered', 'rejected'],
       allowNull: false,
       defaultValue: 'draft',
     },
@@ -60,6 +60,15 @@ const OrderModel = database.define(
       type: Sequelize.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    payment_intent: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+    rejection_reason: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      defaultValue: '',
     },
   },
   {

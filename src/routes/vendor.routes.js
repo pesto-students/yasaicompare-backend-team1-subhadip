@@ -42,7 +42,7 @@ VendorRouter.get(
   authMiddleware.authenticate,
   authMiddleware.authorize('get_shop_orders'),
   Validations.vendorValidation.getShopOrdersValidator,
-  Controllers.VendorController.getShopByIdAction
+  Controllers.VendorController.getOrdersAction
 );
 
 /**
@@ -54,6 +54,22 @@ VendorRouter.get(
   authMiddleware.authorize('get_shop_orders'),
   Validations.vendorValidation.getShopOrderValidator,
   Controllers.VendorController.getShopByIdAction
+);
+
+/**
+ * 
+    ============================ PUT METHODS ======================================
+ */
+
+/**
+ * Manage Order By Id
+ */
+VendorRouter.put(
+  '/order/:shop_id/:order_id',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('update_shop_orders'),
+  Validations.vendorValidation.updateShopOrderValidator,
+  Controllers.VendorController.updateOrderByIdAction
 );
 
 /**

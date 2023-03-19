@@ -68,6 +68,7 @@ const loginAction = async (req, res) => {
      */
     const returnData = {
       accessToken,
+      role: user.role,
     };
 
     const options = {
