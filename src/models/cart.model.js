@@ -22,10 +22,10 @@ const CartModel = database.define(
     item_id: {
       type: Sequelize.STRING,
       allowNull: false,
-      references: {
-        model: InventoryModel, 
-        key: 'inventory_id'
-      }
+      // references: {
+      //   model: InventoryModel, 
+      //   key: 'inventory_id'
+      // }
     },
     quantity: {
       type: Sequelize.BIGINT,
