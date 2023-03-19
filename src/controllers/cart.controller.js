@@ -206,9 +206,11 @@ const updateCartAction = async (req, res) => {
       });
     }
 
-    const response = await Services.CartService.updateCartItem(body, {
+    await Services.CartService.updateCartItem(body, {
       where: { cart_id: body.cart_id },
     });
+
+    const response = await Services.CartService.getACartItem(body.cart_id);
 
     /**
      * If Cart Item Could Not be updated
@@ -224,7 +226,7 @@ const updateCartAction = async (req, res) => {
      * Item Added to Cart Successfully
      */
     const returnData = {
-      message: 'Item Updated in Cart Successfully',
+      response,
     };
 
     return res.status(201).send(returnData);
