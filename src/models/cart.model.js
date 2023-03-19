@@ -37,7 +37,7 @@ const CartModel = database.define(
       allowNull: false,
       defaultValue: '',
     },
-    image: {
+    name: {
       type: Sequelize.STRING,
       allowNull: false,
       defaultValue: '',
