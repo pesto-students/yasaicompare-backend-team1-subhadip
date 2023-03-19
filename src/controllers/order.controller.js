@@ -377,6 +377,7 @@ const createOrderAction = async (req, res) => {
    * Order Group Id
    */
   const { groupId, totalAmount } = preparedData;
+  
   try {
     const paymentIntent = await Stripe.paymentIntents.create({
       amount: Math.round((totalAmount * 100).toFixed(2)),
