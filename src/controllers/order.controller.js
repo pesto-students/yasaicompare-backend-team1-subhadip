@@ -378,10 +378,18 @@ const createOrderAction = async (req, res) => {
    */
   const { groupId, totalAmount } = preparedData;
 
-  const paymentIntent = await Stripe.paymentIntents.create({
-    amount: Math.round((totalAmount * 100).toFixed(2)),
-    currency: 'inr',
-  });
+  try {
+    const paymentIntent = await Stripe.paymentIntents.create({
+      amount: Math.round((totalAmount * 100).toFixed(2)),
+      currency: 'inr',
+    });
+  } catch (error) {
+    console.log(error, Math.round((totalAmount * 100).toFixed(2)));
+    return res.status(500).send({
+      error: 'Stripe Error',
+      data: error,
+    });
+  }
 
   /**
    * Start Transaction
