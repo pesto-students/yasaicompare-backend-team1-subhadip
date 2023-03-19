@@ -35,6 +35,9 @@ const getCartAction = async (req, res) => {
    */
   const filter = {
     where: req.body,
+    include: [
+      'inventory'
+    ],
     attributes,
     offset: pageInfo,
     limit,

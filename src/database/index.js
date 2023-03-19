@@ -10,5 +10,6 @@ const database = new Sequelize({
     idle: 10000,
   },
 });
+// database.sync({ alter: true });
 
 export default database;

@@ -10,6 +10,9 @@ import CategoryModel from './category.model';
 UserModel.hasMany(UserAddressModel);
 UserAddressModel.hasOne(UserModel);
 
+CartModel.hasOne(InventoryModel);
+InventoryModel.hasMany(CartModel);
+
 const models = {
   UserModel,
   UserAddressModel,
