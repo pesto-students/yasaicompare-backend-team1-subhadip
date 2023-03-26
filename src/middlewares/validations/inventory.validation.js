@@ -67,6 +67,7 @@ const getInventoryValidator = async (req, res, next) => {
    */
   if (!isValidParam?.error) {
     // Proceed to Route
+    req.body = isValidParam.value;
 
     next();
   } else {

@@ -201,7 +201,7 @@ const registerShopAction = async (req, res) => {
   const { body } = req;
 
   try {
-    const response = await Services.ShopsService.createShop(body);
+    const response = await Services.ShopsService.createShop(body, {attributes});
 
     /**
      * If Shop Could Not be created
@@ -218,6 +218,7 @@ const registerShopAction = async (req, res) => {
      */
     const returnData = {
       message: 'Shop Created Successfully',
+      data: response,
     };
 
     return res.status(201).send(returnData);

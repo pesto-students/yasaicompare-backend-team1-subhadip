@@ -35,9 +35,6 @@ const getCartAction = async (req, res) => {
    */
   const filter = {
     where: req.body,
-    include: [
-      'inventory'
-    ],
     attributes,
     offset: pageInfo,
     limit,
@@ -125,12 +122,15 @@ const addCartAction = async (req, res) => {
     if (count === null) {
       body.price = body.quantity * inventory.price;
       body.image = inventory.image;
-      body.name = inventory.name
-      response = await Services.CartService.createCartItem(body);
+      body.name = inventory.name;
+      response = await Services.CartService.createCartItem(body, {
+        attributes,
+      });
     } else {
       req.body.quantity += count.quantity;
       req.body.price = req.body.quantity * inventory.price;
       req.body.image = inventory.image;
+      cartFilter.attributes = attributes;
       response = await Services.CartService.updateCartItem(
         req.body,
         cartFilter
@@ -152,6 +152,7 @@ const addCartAction = async (req, res) => {
      */
     const returnData = {
       message: 'Item Added to Cart Successfully',
+      data: response,
     };
 
     return res.status(201).send(returnData);
@@ -209,11 +210,9 @@ const updateCartAction = async (req, res) => {
       });
     }
 
-    await Services.CartService.updateCartItem(body, {
+    let response = await Services.CartService.updateCartItem(body, {
       where: { cart_id: body.cart_id },
     });
-
-    const response = await Services.CartService.getACartItem(body.cart_id);
 
     /**
      * If Cart Item Could Not be updated
@@ -225,6 +224,10 @@ const updateCartAction = async (req, res) => {
       return res.status(500).send(returnResponse);
     }
 
+    response = await Services.CartService.getACartItem(body.cart_id, {
+      attributes,
+    });
+
     /**
      * Item Added to Cart Successfully
      */
@@ -232,7 +235,7 @@ const updateCartAction = async (req, res) => {
       response,
     };
 
-    return res.status(201).send(returnData);
+    return res.status(200).send(returnData);
   } catch (error) {
     /**
      * Error Occured
@@ -284,7 +287,6 @@ const deleteCartAction = async (req, res) => {
     /**
      * Error Occured
      */
-    console.log(error);
     const response = {
       error: 'An error Occured while deleting Item',
       data: error,

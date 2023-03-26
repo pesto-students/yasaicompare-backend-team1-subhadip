@@ -18,7 +18,7 @@ const getShop = (params) => ShopsModel.findOne(params);
  * Create a Shop
  * @returns object
  */
-const createShop = (data) => ShopsModel.create(data);
+const createShop = (data, options = {}) => ShopsModel.create(data, options);
 
 /**
  * Get Shop By ID
