@@ -36,6 +36,7 @@ const getShopsAction = async (req, res) => {
    */
   const { active, limit, latitude, longitude, pincode, distance } = req.body;
   const pageInfo = req.body.page_info;
+  const parsedPincode = parseInt(pincode);
 
   /**
    * Filter Data
@@ -43,9 +44,9 @@ const getShopsAction = async (req, res) => {
   const filter = {
     where: {
       active,
-      // pincode: {
-      //   [Operator.between]: [pincode + distance, pincode - distance],
-      // },
+      pincode: {
+        [Operator.between]: [parsedPincode - distance, parsedPincode + distance],
+      },
     },
     attributes,
     offset: pageInfo,
@@ -201,7 +202,9 @@ const registerShopAction = async (req, res) => {
   const { body } = req;
 
   try {
-    const response = await Services.ShopsService.createShop(body, {attributes});
+    const response = await Services.ShopsService.createShop(body, {
+      attributes,
+    });
 
     /**
      * If Shop Could Not be created

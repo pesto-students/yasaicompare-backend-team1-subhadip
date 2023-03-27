@@ -48,6 +48,11 @@ const UserModel = database.define(
       enum: ROLES,
       defaultValue: 'customer',
     },
+    aadhar_no: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      defaultValue: '',
+    },
   },
   {
     timestamps: true,
