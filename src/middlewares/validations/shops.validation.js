@@ -17,7 +17,7 @@ const getShopsValidator = async (req, res, next) => {
     limit: Joi.number().min(1).max(10).default(5),
     latitude: Joi.number().precision(10).required(),
     longitude: Joi.number().precision(10).required(),
-    pincode: Joi.string().min(6).max(6).required(),
+    pincode: Joi.number().precision(0).required(),
     distance: Joi.number().min(1).max(10).default(1),
   });
 

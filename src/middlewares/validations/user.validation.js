@@ -100,7 +100,7 @@ const createAddressValidator = (req, res, next) => {
    */
   const bodySchema = Joi.object({
     address_line_1: Joi.string().min(3).max(255).required(),
-    address_line_2: Joi.string().min(3).max(255).required(),
+    address_line_2: Joi.string().min(3).max(255).default(''),
     city: Joi.string().min(3).max(255).required(),
     state: Joi.string().min(3).max(255).required(),
     country: Joi.string().min(3).max(255).required(),
