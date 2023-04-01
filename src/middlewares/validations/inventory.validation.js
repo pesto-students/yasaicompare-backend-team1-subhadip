@@ -107,7 +107,7 @@ const createInventoryValidator = async (req, res, next) => {
   });
 
   const paramSchema = Joi.object({
-    shop_id: Joi.string().min(3).max(255).required(),
+    shop_id: Joi.string().min(3).max(255).required(),  
   });
 
   const isValidBody = bodySchema.validate(req.body);

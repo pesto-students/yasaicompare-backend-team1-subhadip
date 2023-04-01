@@ -4,7 +4,7 @@
   "description": "Starter template for nodejs rest api project",
   "main": "app.js",
   "scripts": {
-    "start:dev": "nodemon --watch .env --exec \"npm run build && node build/bundle.js\" -e js --ignore build/",
+    "start:dev": "nodemon --exec \"npm run build && node build/bundle.js\" -e js --ignore build/",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "build": "rimraf build && webpack --mode=development",

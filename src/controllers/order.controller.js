@@ -8,6 +8,9 @@ import StripeModule from 'stripe';
 const Operator = sequelize.Op;
 const DATABASE = database;
 const Stripe = StripeModule(config.STRIPE_PRIVATE_KEY);
+// const Stripe = StripeModule(process.env.STRIPE_SECRET_KEY, {
+//   apiVersion: "2022-08-01",
+// });
 
 /**
  * Fields for Order to Return
@@ -377,10 +380,18 @@ const createOrderAction = async (req, res) => {
    * Order Group Id
    */
   const { groupId, totalAmount } = preparedData;
+  let paymentIntent = {};
   try {
-    const paymentIntent = await Stripe.paymentIntents.create({
+    paymentIntent = await Stripe.paymentIntents.create({
       amount: Math.round((totalAmount * 100).toFixed(2)),
-      currency: 'inr',
+      currency: "inr",
+      automatic_payment_methods:  {
+        enabled: true,
+      },
+      metadata: {
+        'customer_id': (await Helpers.JWT.decodeJWTToken(await Helpers.Validator.headerValidator(req)))?.data?.user_id || '',
+        'order_group_id': groupId,
+      }
     });
   } catch (error) {
     return res.status(500).send({

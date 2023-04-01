@@ -157,6 +157,7 @@ const createInventoryAction = async (req, res) => {
      */
     const returnData = {
       message: 'Inventory Created Successfully',
+      data: response,
     };
     return res.status(201).send(returnData);
   } catch (error) {
