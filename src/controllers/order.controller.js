@@ -116,7 +116,7 @@ const getOrderByIdAction = async (req, res) => {
     /**
      * Get Order Id from DB
      */
-    const response = await Services.OrderService.getOrderById(filter);
+    const response = await Services.OrderService.getOrder(filter);
 
     /**
      * If Order Could Not be Found
@@ -379,7 +379,7 @@ const createOrderAction = async (req, res) => {
   /**
    * Order Group Id
    */
-  const { groupId, totalAmount } = preparedData;
+  const { orderId, totalAmount } = preparedData;
   let paymentIntent = {};
   try {
     paymentIntent = await Stripe.paymentIntents.create({
@@ -390,7 +390,7 @@ const createOrderAction = async (req, res) => {
       },
       metadata: {
         'customer_id': (await Helpers.JWT.decodeJWTToken(await Helpers.Validator.headerValidator(req)))?.data?.user_id || '',
-        'order_group_id': groupId,
+        'order_group_id': orderId,
       }
     });
   } catch (error) {
@@ -468,7 +468,7 @@ const createOrderAction = async (req, res) => {
 
     const returnData = {
       message: 'Order Waiting for Confirmation',
-      order_id: groupId,
+      order_id: orderId,
       paymentData: paymentIntent,
     };
 
@@ -521,7 +521,6 @@ const confirmOrderAction = async (req, res) => {
       customer_id: customerId,
       draft: true,
     },
-    attributes,
   };
 
   try {
@@ -535,7 +534,7 @@ const confirmOrderAction = async (req, res) => {
     /**
      * Hitting Service
      */
-    const order = await Services.OrderService.updateOrder(data, filter);
+    let order = await Services.OrderService.updateOrder(data, filter);
 
     if (order === null) {
       return res.status(400).send({
@@ -543,8 +542,11 @@ const confirmOrderAction = async (req, res) => {
       });
     }
 
+    order = await Services.OrderService.getOrderById(orderId, {attributes});
+
     return res.status(201).send({
       message: 'Order Confirmed Successfully',
+      data: order
     });
   } catch (error) {
     return res.status(500).send({
