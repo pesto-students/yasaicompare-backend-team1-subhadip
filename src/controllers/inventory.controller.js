@@ -11,6 +11,7 @@ const attributes = [
   'quantity',
   'in_stock',
   'image',
+  'unit'
 ];
 
 /**

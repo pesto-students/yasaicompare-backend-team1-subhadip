@@ -10,6 +10,10 @@ const UserAddressModel = database.define(
       allowNull: false,
       primaryKey: true,
     },
+    label: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
     address_line_1: {
       type: Sequelize.STRING,
       allowNull: false,

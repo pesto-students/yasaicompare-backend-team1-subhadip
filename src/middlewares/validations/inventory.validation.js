@@ -98,6 +98,7 @@ const createInventoryValidator = async (req, res, next) => {
     price: Joi.number().precision(4).required(),
     quantity: Joi.number().integer().required(),
     in_stock: Joi.boolean().default(false),
+    unit: Joi.string().min(2).max(20).required(),
     image: Joi.string()
       .min(3)
       .max(255)
@@ -175,6 +176,7 @@ const updateInventoryValidator = async (req, res, next) => {
     price: Joi.number().precision(4),
     quantity: Joi.number().integer(),
     in_stock: Joi.boolean().default(false),
+    unit: Joi.string().min(2).max(20),
     image: Joi.string()
       .min(3)
       .max(255)
