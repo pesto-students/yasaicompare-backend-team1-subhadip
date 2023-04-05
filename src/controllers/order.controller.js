@@ -505,7 +505,15 @@ const confirmOrderAction = async (req, res) => {
   /**
    * Payment Confirmation
    */
-  const paymentIntent = await Stripe.paymentIntents.confirm(transactionId);
+  try {
+    const paymentIntent = await Stripe.paymentIntents.confirm(transactionId);
+  } catch (error) {
+    return res.status(500).send({
+      error: 'Error Occured',
+      data: error,
+    })
+  }
+  
   if (paymentIntent.status !== 'succeeded') {
     return res.status(400).send({
       error: 'Payment not Confirmed',
