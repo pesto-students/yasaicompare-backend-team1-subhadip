@@ -104,6 +104,14 @@ const createOrderValidator = async (req, res, next) => {
   const ordersSchema = Joi.object().keys({
     orders: Joi.array().required(),
     delievery_address: Joi.string().min(3).max(255).required(),
+    // payment_data: Joi.object().keys({
+    //   card_number: Joi.string().min(16).max(16).required(),
+    //   cvv: Joi.number().min(0).max(999).required(),
+    //   exp: Joi.object().keys({
+    //     month: Joi.number().min(1).max(12).required(),
+    //     year: Joi.number().min(2023).max(2099).required(),
+    //   })
+    // }),
   });
   const isValidOrdersSchema = ordersSchema.validate(req.body);
 
@@ -157,6 +165,7 @@ const createOrderValidator = async (req, res, next) => {
     orders: formattedOrder,
     customer_id: userId,
     delieveryAddress: isValidOrdersSchema.value.delievery_address,
+    // paymentData: isValidOrdersSchema.value.payment_data,
   };
   next();
 };

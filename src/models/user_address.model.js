@@ -47,7 +47,7 @@ const UserAddressModel = database.define(
       allowNull: false,
     },
     pincode: {
-      type: Sequelize.STRING,
+      type: Sequelize.INTEGER,
       allowNull: true,
     },
     is_active: {

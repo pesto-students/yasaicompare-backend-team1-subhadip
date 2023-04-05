@@ -229,7 +229,7 @@ const prepareOrderData = async (body) => {
   };
   const orderNumber = (await Services.OrderService.getOrdersCount(filter)) + 1;
   const groupId = `${body.customer_id} - ${orderNumber}`;
-  let finalAmount = 0.50;
+  let finalAmount = 0.5;
 
   const finalData = await Promise.all(
     body.orders.map(async (order) => {
@@ -369,6 +369,7 @@ const createOrderAction = async (req, res) => {
    * Params Validation
    */
   const preparedData = await prepareOrderData(req.body);
+  const { paymentData } = req.body;
 
   if (preparedData === null) {
     return res.status(404).send({
@@ -382,16 +383,32 @@ const createOrderAction = async (req, res) => {
   const { orderId, totalAmount } = preparedData;
   let paymentIntent = {};
   try {
+    // const paymentMethod = await Stripe.paymentMethods.create({
+    //   type: 'card',
+    //   card: {
+    //     number: paymentData.card_number,
+    //     exp_month: paymentData.exp.month,
+    //     exp_year: paymentData.exp.year,
+    //     cvc: paymentData.exp.cvv,
+    //   },
+    // });
+
     paymentIntent = await Stripe.paymentIntents.create({
       amount: Math.round((totalAmount * 100).toFixed(2)),
-      currency: "inr",
-      automatic_payment_methods:  {
+      currency: 'inr',
+      automatic_payment_methods: {
         enabled: true,
       },
+      // payment_method: paymentMethod.id,
       metadata: {
-        'customer_id': (await Helpers.JWT.decodeJWTToken(await Helpers.Validator.headerValidator(req)))?.data?.user_id || '',
-        'order_group_id': orderId,
-      }
+        customer_id:
+          (
+            await Helpers.JWT.decodeJWTToken(
+              await Helpers.Validator.headerValidator(req)
+            )
+          )?.data?.user_id || '',
+        order_group_id: orderId,
+      },
     });
   } catch (error) {
     return res.status(500).send({
@@ -457,7 +474,8 @@ const createOrderAction = async (req, res) => {
 
     if (!orderPlaced) {
       return res.status(404).send({
-        error: 'Order Could Not be Placed. Item cannot be delieverd at your location',
+        error:
+          'Order Could Not be Placed. Item cannot be delieverd at your location',
       });
     }
 
@@ -502,18 +520,20 @@ const confirmOrderAction = async (req, res) => {
   const customerId = req.body.customer_id;
   const transactionId = req.body.transaction_id;
 
+
   /**
    * Payment Confirmation
    */
+  let paymentIntent = {};
   try {
-    const paymentIntent = await Stripe.paymentIntents.confirm(transactionId);
+    paymentIntent = await Stripe.paymentIntents.retrieve(transactionId);
   } catch (error) {
     return res.status(500).send({
       error: 'Error Occured',
       data: error,
-    })
+    });
   }
-  
+
   if (paymentIntent.status !== 'succeeded') {
     return res.status(400).send({
       error: 'Payment not Confirmed',
@@ -550,11 +570,11 @@ const confirmOrderAction = async (req, res) => {
       });
     }
 
-    order = await Services.OrderService.getOrderById(orderId, {attributes});
+    order = await Services.OrderService.getOrderById(orderId, { attributes });
 
     return res.status(201).send({
       message: 'Order Confirmed Successfully',
-      data: order
+      data: order,
     });
   } catch (error) {
     return res.status(500).send({
