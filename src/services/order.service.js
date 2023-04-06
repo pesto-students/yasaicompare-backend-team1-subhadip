@@ -26,7 +26,7 @@ const getOrder = (filter) => OrderModel.findAll(filter);
  * @param { string } id
  * @returns object
  */
-const getOrderById = (id, options ={}) => OrderModel.findByPk(id, options);
+const getOrderById = (id, options = {}) => OrderModel.findByPk(id, options);
 
 /**
  * Get Order Count

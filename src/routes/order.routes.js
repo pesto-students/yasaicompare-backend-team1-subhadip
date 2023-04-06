@@ -24,6 +24,17 @@ OrderRouter.get(
 );
 
 /**
+ * Confirm An Order
+ */
+OrderRouter.get(
+  '/confirm-order',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('create_order'),
+  Validations.orderValidation.confirmOrderValidator,
+  Controllers.OrderController.confirmOrderAction
+);
+
+/**
  * Get Order By Id
  */
 OrderRouter.get(
@@ -32,17 +43,6 @@ OrderRouter.get(
   authMiddleware.authorize('get_orders_customer'),
   Validations.orderValidation.getOrderValidator,
   Controllers.OrderController.getOrderByIdAction
-);
-
-/**
- * Confirm An Order
- */
-OrderRouter.get(
-  '/confirm_order',
-  authMiddleware.authenticate,
-  authMiddleware.authorize('create_order'),
-  Validations.orderValidation.confirmOrderValidator,
-  Controllers.OrderController.confirmOrderAction
 );
 
 /**
@@ -81,35 +81,35 @@ OrderRouter.delete(
  * Error Routes
  */
 OrderRouter.get('*', (req, res) => {
-  res.status(404).send(errorMessage);
+  return res.status(404).send(errorMessage);
 });
 
 OrderRouter.head('*', (req, res) => {
-  res.status(404).send(errorMessage);
+  return res.status(404).send(errorMessage);
 });
 
 OrderRouter.post('*', (req, res) => {
-  res.status(404).send(errorMessage);
+  return res.status(404).send(errorMessage);
 });
 
 OrderRouter.put('*', (req, res) => {
-  res.status(404).send(errorMessage);
+  return res.status(404).send(errorMessage);
 });
 
 OrderRouter.delete('*', (req, res) => {
-  res.status(404).send(errorMessage);
+  return res.status(404).send(errorMessage);
 });
 
 OrderRouter.connect('*', (req, res) => {
-  res.status(404).send(errorMessage);
+  return res.status(404).send(errorMessage);
 });
 
 OrderRouter.options('*', (req, res) => {
-  res.status(404).send(errorMessage);
+  return res.status(404).send(errorMessage);
 });
 
 OrderRouter.trace('*', (req, res) => {
-  res.status(404).send(errorMessage);
+  return res.status(404).send(errorMessage);
 });
 
 export default OrderRouter;
