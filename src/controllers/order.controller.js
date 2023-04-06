@@ -518,8 +518,7 @@ const createOrderAction = async (req, res) => {
 const confirmOrderAction = async (req, res) => {
   const orderId = req.body.order_group_id;
   const customerId = req.body.customer_id;
-  const transactionId = req.body.transaction_id;
-
+  const transactionId = req.body.payment_intent;
 
   /**
    * Payment Confirmation

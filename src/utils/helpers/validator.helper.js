@@ -18,6 +18,10 @@ const headerValidator = (request) => {
     return request.headers.authorization.replace('Bearer ', '');
   }
 
+  if (Object.prototype.hasOwnProperty.call(request.query.user_token)) {
+    return request.query.user_token;
+  }
+
   return request.headers.authorization;
 };
 

@@ -35,6 +35,17 @@ OrderRouter.get(
 );
 
 /**
+ * Confirm An Order
+ */
+OrderRouter.get(
+  '/confirm_order',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('create_order'),
+  Validations.orderValidation.confirmOrderValidator,
+  Controllers.OrderController.confirmOrderAction
+);
+
+/**
  * 
     ============================ POST METHODS ======================================
  */
@@ -48,17 +59,6 @@ OrderRouter.post(
   authMiddleware.authorize('create_order'),
   Validations.orderValidation.createOrderValidator,
   Controllers.OrderController.createOrderAction
-);
-
-/**
- * Confirm An Order
- */
-OrderRouter.post(
-  '/confirm_order',
-  authMiddleware.authenticate,
-  authMiddleware.authorize('create_order'),
-  Validations.orderValidation.confirmOrderValidator,
-  Controllers.OrderController.confirmOrderAction
 );
 
 /**
