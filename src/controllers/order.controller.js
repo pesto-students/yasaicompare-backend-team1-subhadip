@@ -752,10 +752,63 @@ const deleteOrderAction = async (req, res) => {
   }
 };
 
+/**
+ * Update Order
+ * @param {object} req
+ * @param {object} res
+ * @returns object
+ */
+const updateOrderAction = async (req, res) => {
+  const { filter, data } = req.body;
+
+  filter.draft = false;
+
+  /**
+   * If Merchant Tries to change status to delievered
+   */
+  if (data.order_status !== 'delievered') {
+    return res.status(400).send({
+      error: 'User Cannot update the Status except Delievered',
+    });
+  }
+
+  try {
+    /**
+     * Hitting Service
+     */
+    let order = await Services.OrderService.updateOrder(data, {
+      where: filter,
+      attributes,
+    });
+
+    if (order === null) {
+      return res.status(400).send({
+        error: 'Order Not Found',
+      });
+    }
+
+    order = await Services.OrderService.getOrder({
+      where: filter,
+      attributes,
+    });
+
+    return res.status(201).send({
+      message: 'Order Updated Successfully',
+      data: order,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      error: 'An Error Occured',
+      data: error,
+    });
+  }
+};
+
 export default {
   getOrdersAction,
   createOrderAction,
   getOrderByIdAction,
   confirmOrderAction,
   deleteOrderAction,
+  updateOrderAction,
 };

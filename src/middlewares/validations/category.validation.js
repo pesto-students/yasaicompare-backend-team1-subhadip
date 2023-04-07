@@ -6,7 +6,6 @@ import Joi from 'joi';
  */
 // eslint-disable-next-line consistent-return
 const getCategoriesValidator = async (req, res, next) => {
-
   const querySchema = Joi.object({
     page_info: Joi.number().default(0),
     limit: Joi.number().min(1).max(10).default(5),

@@ -253,6 +253,15 @@ const getOrderByIdAction = async (req, res) => {
 const updateOrderByIdAction = async (req, res) => {
   const { filter, data } = req.body;
 
+  /**
+   * If Merchant Tries to change status to delievered
+   */
+  if (data.order_status === 'delievered') {
+    return res.status(400).send({
+      error: 'Merchant Cannot update the Status to Delievered',
+    });
+  }
+
   try {
     /**
      * Filter

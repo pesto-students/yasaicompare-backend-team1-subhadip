@@ -45,7 +45,10 @@ const getShopsAction = async (req, res) => {
     where: {
       active,
       pincode: {
-        [Operator.between]: [parsedPincode - distance, parsedPincode + distance],
+        [Operator.between]: [
+          parsedPincode - distance,
+          parsedPincode + distance,
+        ],
       },
     },
     attributes,
@@ -82,14 +85,14 @@ const getShopsAction = async (req, res) => {
         longitude: updatedShop.longitude,
       };
 
-      const distance = Helpers.DistanceHelper.getDistanceOfShop(
+      const calculatedDistance = Helpers.DistanceHelper.getDistanceOfShop(
         userLocation,
         shopLocation
       );
 
       delete updatedShop.latitude;
       delete updatedShop.longitude;
-      updatedShop.distance = distance;
+      updatedShop.distance = calculatedDistance;
 
       return updatedShop;
     });
