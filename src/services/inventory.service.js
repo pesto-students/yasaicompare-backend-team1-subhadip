@@ -18,7 +18,8 @@ const getInventory = (params) => InventoryModel.findOne(params);
  * Create an Inventory
  * @returns object
  */
-const createInventory = (data) => InventoryModel.create(data);
+const createInventory = (data, options = {}) =>
+  InventoryModel.create(data, options);
 
 /**
  * Update an Inventory
@@ -31,7 +32,8 @@ const updateInventory = (data, filter) => InventoryModel.update(data, filter);
  * @param { string } id
  * @returns object
  */
-const getInventoryById = (id) => InventoryModel.findByPk(id);
+const getInventoryById = (id, options = {}) =>
+  InventoryModel.findByPk(id, options);
 
 export default {
   getAllInventory,

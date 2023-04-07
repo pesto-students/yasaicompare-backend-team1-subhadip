@@ -67,6 +67,7 @@ const getInventoryValidator = async (req, res, next) => {
    */
   if (!isValidParam?.error) {
     // Proceed to Route
+    req.body = isValidParam.value;
 
     next();
   } else {
@@ -97,6 +98,7 @@ const createInventoryValidator = async (req, res, next) => {
     price: Joi.number().precision(4).required(),
     quantity: Joi.number().integer().required(),
     in_stock: Joi.boolean().default(false),
+    unit: Joi.string().min(2).max(20).required(),
     image: Joi.string()
       .min(3)
       .max(255)
@@ -106,7 +108,7 @@ const createInventoryValidator = async (req, res, next) => {
   });
 
   const paramSchema = Joi.object({
-    shop_id: Joi.string().min(3).max(255).required(),
+    shop_id: Joi.string().min(3).max(255).required(),  
   });
 
   const isValidBody = bodySchema.validate(req.body);
@@ -174,6 +176,7 @@ const updateInventoryValidator = async (req, res, next) => {
     price: Joi.number().precision(4),
     quantity: Joi.number().integer(),
     in_stock: Joi.boolean().default(false),
+    unit: Joi.string().min(2).max(20),
     image: Joi.string()
       .min(3)
       .max(255)

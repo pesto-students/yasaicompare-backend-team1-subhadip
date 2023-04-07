@@ -10,6 +10,10 @@ const UserAddressModel = database.define(
       allowNull: false,
       primaryKey: true,
     },
+    label: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
     address_line_1: {
       type: Sequelize.STRING,
       allowNull: false,
@@ -43,7 +47,7 @@ const UserAddressModel = database.define(
       allowNull: false,
     },
     pincode: {
-      type: Sequelize.STRING,
+      type: Sequelize.INTEGER,
       allowNull: true,
     },
     is_active: {

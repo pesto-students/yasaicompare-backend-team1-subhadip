@@ -11,6 +11,7 @@ const attributes = [
   'quantity',
   'in_stock',
   'image',
+  'unit'
 ];
 
 /**
@@ -138,7 +139,9 @@ const getInventoryByIdAction = async (req, res) => {
  */
 const createInventoryAction = async (req, res) => {
   try {
-    const response = await Services.InventoryService.createInventory(req.body);
+    const response = await Services.InventoryService.createInventory(req.body, {
+      attributes,
+    });
 
     /**
      * If Inventory Could Not be created
@@ -155,6 +158,7 @@ const createInventoryAction = async (req, res) => {
      */
     const returnData = {
       message: 'Inventory Created Successfully',
+      data: response,
     };
     return res.status(201).send(returnData);
   } catch (error) {
@@ -188,7 +192,7 @@ const updateInventoryAction = async (req, res) => {
   };
 
   try {
-    const response = await Services.InventoryService.updateInventory(
+    let response = await Services.InventoryService.updateInventory(
       body,
       filter
     );
@@ -203,11 +207,17 @@ const updateInventoryAction = async (req, res) => {
       return res.status(500).send(returnResponse);
     }
 
+    response = await Services.InventoryService.getInventoryById(
+      req.body.filter.inventory_id,
+      { attributes }
+    );
+
     /**
      * Item Created Successfully
      */
     const returnData = {
       message: 'Inventory updated Successfully',
+      data: response,
     };
     return res.status(201).send(returnData);
   } catch (error) {

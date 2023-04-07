@@ -1,13 +1,16 @@
 import sequelize from 'sequelize';
+import StripeModule from 'stripe';
 import Services from '../services';
 import database from '../database';
 import Helpers from '../utils/helpers';
 import config from '../config';
-import StripeModule from 'stripe';
 
 const Operator = sequelize.Op;
 const DATABASE = database;
 const Stripe = StripeModule(config.STRIPE_PRIVATE_KEY);
+// const Stripe = StripeModule(process.env.STRIPE_SECRET_KEY, {
+//   apiVersion: "2022-08-01",
+// });
 
 /**
  * Fields for Order to Return
@@ -46,10 +49,19 @@ const getOrdersAction = async (req, res) => {
    */
   const filter = {
     where: req.body,
-    attributes: [['order_group_id', 'order_id']],
+    attributes: [
+      ['order_group_id', 'order_id'],
+      'shop_id',
+      'amount',
+      'order_status',
+      'payment_status',
+      'delievery_charge',
+      'createdAt',
+      'updatedAt',
+    ],
     offset: pageInfo,
     limit,
-    group: ['order_group_id'],
+    group: ['order_id'],
   };
 
   try {
@@ -113,7 +125,7 @@ const getOrderByIdAction = async (req, res) => {
     /**
      * Get Order Id from DB
      */
-    const response = await Services.OrderService.getOrderById(filter);
+    const response = await Services.OrderService.getOrder(filter);
 
     /**
      * If Order Could Not be Found
@@ -226,7 +238,7 @@ const prepareOrderData = async (body) => {
   };
   const orderNumber = (await Services.OrderService.getOrdersCount(filter)) + 1;
   const groupId = `${body.customer_id} - ${orderNumber}`;
-  let finalAmount = 0.50;
+  let finalAmount = 0;
 
   const finalData = await Promise.all(
     body.orders.map(async (order) => {
@@ -376,12 +388,31 @@ const createOrderAction = async (req, res) => {
   /**
    * Order Group Id
    */
-  const { groupId, totalAmount } = preparedData;
-  
+  const { orderId, totalAmount } = preparedData;
+
+  if (totalAmount === 0) {
+    return res.status(400).send({
+      error: `Item(s) are Out of Stock`,
+    });
+  }
+
+  let paymentIntent = {};
   try {
-    const paymentIntent = await Stripe.paymentIntents.create({
+    paymentIntent = await Stripe.paymentIntents.create({
       amount: Math.round((totalAmount * 100).toFixed(2)),
       currency: 'inr',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        customer_id:
+          (
+            await Helpers.JWT.decodeJWTToken(
+              await Helpers.Validator.headerValidator(req)
+            )
+          )?.data?.user_id || '',
+        order_group_id: orderId,
+      },
     });
   } catch (error) {
     return res.status(500).send({
@@ -447,7 +478,8 @@ const createOrderAction = async (req, res) => {
 
     if (!orderPlaced) {
       return res.status(404).send({
-        error: 'Order Could Not be Placed. Item cannot be delieverd at your location',
+        error:
+          'Order Could Not be Placed. Item cannot be delieverd at your location',
       });
     }
 
@@ -458,7 +490,7 @@ const createOrderAction = async (req, res) => {
 
     const returnData = {
       message: 'Order Waiting for Confirmation',
-      order_id: groupId,
+      order_id: orderId,
       paymentData: paymentIntent,
     };
 
@@ -490,12 +522,21 @@ const createOrderAction = async (req, res) => {
 const confirmOrderAction = async (req, res) => {
   const orderId = req.body.order_group_id;
   const customerId = req.body.customer_id;
-  const transactionId = req.body.transaction_id;
+  const transactionId = req.body.payment_intent;
 
   /**
    * Payment Confirmation
    */
-  const paymentIntent = await Stripe.paymentIntents.confirm(transactionId);
+  let paymentIntent = {};
+  try {
+    paymentIntent = await Stripe.paymentIntents.retrieve(transactionId);
+  } catch (error) {
+    return res.status(500).send({
+      error: 'Error Occured',
+      data: error,
+    });
+  }
+
   if (paymentIntent.status !== 'succeeded') {
     return res.status(400).send({
       error: 'Payment not Confirmed',
@@ -507,11 +548,10 @@ const confirmOrderAction = async (req, res) => {
    */
   const filter = {
     where: {
-      order_id: orderId,
+      order_group_id: orderId,
       customer_id: customerId,
       draft: true,
     },
-    attributes,
   };
 
   try {
@@ -520,12 +560,14 @@ const confirmOrderAction = async (req, res) => {
      */
     const data = {
       draft: false,
+      payment_status: 'paid',
+      order_status: 'pending',
     };
 
     /**
      * Hitting Service
      */
-    const order = await Services.OrderService.updateOrder(data, filter);
+    let order = await Services.OrderService.updateOrder(data, filter);
 
     if (order === null) {
       return res.status(400).send({
@@ -533,14 +575,33 @@ const confirmOrderAction = async (req, res) => {
       });
     }
 
+    order = await Services.OrderService.getOrder({
+      where: {
+        order_group_id: orderId,
+        customer_id: customerId,
+        draft: false,
+      },
+      attributes,
+    });
+
     return res.status(201).send({
       message: 'Order Confirmed Successfully',
+      data: order,
     });
+
+    // return res.writeHead(200, {
+    //   Location: `${config.FRONTEND_URL}/order/confirm?user_token=${req.body.user_token}&order_id=${orderId}&message=Order%20Confirmed%20Successfully`,
+    // });
   } catch (error) {
     return res.status(500).send({
-      error: 'An error Occured while confirm the Order',
+      error: 'An Error Occured',
       data: error,
     });
+    // return res.writeHead(500, {
+    //   Location: `${config.FRONTEND_URL}/order/confirm?user_token=${
+    //     req.body.user_token
+    //   }&order_id&message=An%20Error%20Occured&error=${JSON.stringify(error)}`,
+    // });
   }
 };
 

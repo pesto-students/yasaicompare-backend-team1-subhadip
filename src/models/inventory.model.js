@@ -13,27 +13,27 @@ const InventoryModel = database.define(
     shop_id: {
       type: Sequelize.STRING,
       allowNull: false,
-      uniqueKey: false,
     },
     name: {
       type: Sequelize.STRING,
       allowNull: false,
-      uniqueKey: false,
     },
     category_id: {
       type: Sequelize.STRING,
       allowNull: false,
-      uniqueKey: false,
     },
     price: {
       type: Sequelize.DOUBLE,
       allowNull: false,
-      uniqueKey: false,
     },
     quantity: {
       type: Sequelize.BIGINT,
       allowNull: false,
-      uniqueKey: false,
+    },
+    unit: {
+      type: Sequelize.STRING,
+      enum: ['Kg, g, Litre, ml, no'],
+      allowNull: false,
     },
     in_stock: {
       type: Sequelize.BOOLEAN,

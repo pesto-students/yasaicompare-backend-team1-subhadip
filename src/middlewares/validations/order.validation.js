@@ -172,16 +172,25 @@ const confirmOrderValidator = async (req, res, next) => {
    * User Id set in Authentication
    */
   const { userId } = req.body;
-  delete req.body.userId;
 
-  const bodySchema = Joi.object({
+  const querySchema = Joi.object({
+    user_token: Joi.string().min(3).max(255).required(),
     order_group_id: Joi.string().min(3).max(255).required(),
-    transaction_id: Joi.string().min(3).max(255).required(),
+    payment_intent: Joi.string().min(3).max(255).required(),
+    payment_intent_client_secret: Joi.string().min(3).max(255).required(),
+    redirect_status: Joi.string().min(3).max(20).required(),
   });
-  const isValidBodySchema = bodySchema.validate(req.body);
 
-  if (!isValidBodySchema?.error) {
-    const filter = isValidBodySchema.value;
+  // const bodySchema = Joi.object({
+  //   order_group_id: Joi.string().min(3).max(255).required(),
+  //   transaction_id: Joi.string().min(3).max(255).required(),
+  // });
+  // const isValidBodySchema = bodySchema.validate(req.body);
+
+  const isValidQuery = querySchema.validate(req.query);
+
+  if (!isValidQuery?.error) {
+    const filter = isValidQuery.value;
     filter.customer_id = userId;
 
     req.body = filter;
@@ -189,7 +198,7 @@ const confirmOrderValidator = async (req, res, next) => {
     next();
   } else {
     return res.status(400).send({
-      error: isValidBodySchema.error.details[0].message,
+      error: isValidQuery.error.details[0].message,
     });
   }
 };

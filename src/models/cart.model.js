@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize';
 import database from '../database';
+import InventoryModel from './inventory.model';
 
 const CartModel = database.define(
   'cart',
