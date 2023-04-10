@@ -36,6 +36,19 @@ const shopAttributes = [
 ];
 
 /**
+ * Fields for Order Items
+ */
+const orderItemAttributes = [
+  'item_id',
+  'inventory_id',
+  'order_id',
+  'price',
+  'quantity',
+  'fulfilled',
+  'rejection_reason',
+];
+
+/**
  * Get Vendor Shops
  * @param {object} req
  * @param {object} res
@@ -180,11 +193,26 @@ const getOrdersAction = async (req, res) => {
       return res.status(404).send(returnResponse);
     }
 
+    const preparedData = orders;
+
+    await Promise.all(
+      orders.map(async (shopOrder, index) => {
+        const response = await Services.OrderItemService.getOrderItems({
+          where: {
+            order_id: shopOrder.dataValues.order_id,
+          },
+          attributes: orderItemAttributes,
+        });
+
+        preparedData[index].dataValues.items = response;
+      })
+    );
+
     /**
      * Orders Found
      */
     const returnData = {
-      orders,
+      orders: preparedData,
     };
 
     return res.status(200).send(returnData);
@@ -231,6 +259,13 @@ const getOrderByIdAction = async (req, res) => {
       });
     }
 
+    response.dataValues.items = await Services.OrderItemService.getOrderItems({
+      where: {
+        order_id: req.body.order_id,
+      },
+      attributes: orderItemAttributes,
+    });
+
     const returnData = {
       response,
     };
@@ -274,7 +309,7 @@ const updateOrderByIdAction = async (req, res) => {
     /**
      * Get Order Id from DB
      */
-    const response = await Services.OrderService.updateOrder(data, filterData);
+    let response = await Services.OrderService.updateOrder(data, filterData);
 
     /**
      * If Order Could Not be Found
@@ -285,8 +320,21 @@ const updateOrderByIdAction = async (req, res) => {
       });
     }
 
-    return res.status(204).send({
+    response = await Services.OrderService.getOrderById(filterData);
+
+    const preparedData = response;
+
+    preparedData.dataValues.items =
+      await Services.OrderItemService.getOrderItems({
+        where: {
+          order_id: filter.order_id,
+        },
+        attributes: orderItemAttributes,
+      });
+
+    return res.status(200).send({
       message: 'Order Updated Successfully',
+      data: preparedData,
     });
   } catch (error) {
     return res.status(500).send({
