@@ -8,9 +8,6 @@ import config from '../config';
 const Operator = sequelize.Op;
 const DATABASE = database;
 const Stripe = StripeModule(config.STRIPE_PRIVATE_KEY);
-// const Stripe = StripeModule(process.env.STRIPE_SECRET_KEY, {
-//   apiVersion: "2022-08-01",
-// });
 
 /**
  * Fields for Order to Return
@@ -25,6 +22,16 @@ const attributes = [
   'delievery_charge',
   'createdAt',
   'updatedAt',
+];
+
+const orderItemAttributes = [
+  'item_id',
+  'inventory_id',
+  'order_id',
+  'price',
+  'quantity',
+  'fulfilled',
+  'rejection_reason',
 ];
 
 /**
@@ -56,6 +63,7 @@ const getOrdersAction = async (req, res) => {
       'order_status',
       'payment_status',
       'delievery_charge',
+      ['order_id', 'order_id_get_items'],
       'createdAt',
       'updatedAt',
     ],
@@ -80,11 +88,26 @@ const getOrdersAction = async (req, res) => {
       return res.status(404).send(returnResponse);
     }
 
+    const preparedData = orders;
+
+    await Promise.all(
+      orders.map(async (shopOrder, index) => {
+        const response = await Services.OrderItemService.getOrderItems({
+          where: {
+            order_id: shopOrder.dataValues.order_id_get_items,
+          },
+          attributes: orderItemAttributes,
+        });
+
+        preparedData[index].dataValues.items = response;
+      })
+    );
+
     /**
      * Orders Found
      */
     const returnData = {
-      orders,
+      preparedData,
     };
 
     return res.status(200).send(returnData);
@@ -792,9 +815,32 @@ const updateOrderAction = async (req, res) => {
       attributes,
     });
 
+    const preparedData = order;
+    await Promise.all(
+      order.map(async (shopOrder, index) => {
+        let response = await Services.OrderItemService.updateOrderItems(
+          {
+            fulfilled: true,
+          },
+          { where: { order_id: shopOrder.order_id } }
+        );
+
+        if (response != null) {
+          response = await Services.OrderItemService.getOrderItems({
+            where: {
+              order_id: shopOrder.order_id,
+            },
+            attributes: orderItemAttributes,
+          });
+
+          preparedData[index].dataValues.items = response;
+        }
+      })
+    );
+
     return res.status(201).send({
       message: 'Order Updated Successfully',
-      data: order,
+      data: preparedData,
     });
   } catch (error) {
     return res.status(500).send({
