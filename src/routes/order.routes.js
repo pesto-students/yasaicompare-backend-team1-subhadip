@@ -63,6 +63,22 @@ OrderRouter.post(
 
 /**
  * 
+    ============================ PUT METHODS ======================================
+ */
+
+/**
+ * Update An Order
+ */
+OrderRouter.put(
+  '/update-order/:order_id',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('create_order'),
+  Validations.orderValidation.updateOrderValidator,
+  Controllers.OrderController.updateOrderAction
+);
+
+/**
+ * 
     ============================ DELETE METHODS ======================================
  */
 

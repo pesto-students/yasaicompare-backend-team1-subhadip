@@ -1,9 +1,6 @@
 import Services from '../services';
 
-const attributes = [
-  'category_id',
-  'name',
-];
+const attributes = ['category_id', 'name'];
 
 /**
  * Get Categories
