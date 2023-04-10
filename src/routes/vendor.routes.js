@@ -53,7 +53,7 @@ VendorRouter.get(
   authMiddleware.authenticate,
   authMiddleware.authorize('get_shop_orders'),
   Validations.vendorValidation.getShopOrderValidator,
-  Controllers.VendorController.getShopByIdAction
+  Controllers.VendorController.getOrderByIdAction
 );
 
 /**
