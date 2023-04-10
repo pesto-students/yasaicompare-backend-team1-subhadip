@@ -94,7 +94,7 @@ const ShopsModel = database.define(
   },
   {
     timestamps: true,
-    tableName: 'shops',
+    tableName: 'shops-new',
   }
 );
 

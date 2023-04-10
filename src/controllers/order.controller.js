@@ -28,6 +28,7 @@ const orderItemAttributes = [
   'item_id',
   'inventory_id',
   'order_id',
+  'name',
   'price',
   'quantity',
   'fulfilled',
@@ -135,21 +136,20 @@ const getOrderByIdAction = async (req, res) => {
     /**
      * Filter
      */
-    let filter = {
+    const filter = {
       where: {
         order_group_id: req.body.order_group_id,
         customer_id: req.body.customer_id,
         draft: false,
       },
       attributes,
-      group: ['shop_id'],
+      // group: ['shop_id'],
     };
 
     /**
      * Get Order Id from DB
      */
     const response = await Services.OrderService.getOrder(filter);
-
     /**
      * If Order Could Not be Found
      */
@@ -159,62 +159,24 @@ const getOrderByIdAction = async (req, res) => {
       });
     }
 
-    const shopsData = await Promise.all(
-      response.map(async (order) => {
-        /**
-         * Filter to get Shop Orders in Order
-         */
-        filter = {
+    const preparedData = response;
+
+    await Promise.all(
+      response.map(async (shopOrder, index) => {
+        const orderItems = await Services.OrderItemService.getOrderItems({
           where: {
-            shop_id: order.shop_id,
-            order_group_id: req.params.id,
+            order_id: shopOrder.order_id,
           },
-          attributes,
-        };
-        const orders = (await Services.OrderService.getAllOrders(filter))[0];
-
-        /**
-         * Filter to get Ordered Items from Shop in Order
-         */
-        filter = {
-          where: {
-            order_id: orders.order_id,
-          },
-        };
-        const items = await Services.OrderItemService.getOrderItems(filter);
-
-        const itemsFormattedData = items.map((item) => {
-          const formattedData = {
-            item_id: item.item_id,
-            order_id: item.order_id,
-            price: item.price,
-            quantity: item.quantity,
-            fulfilled: item.fulfilled,
-            rejection_reason: item.rejection_reason,
-          };
-
-          return formattedData;
+          attributes: orderItemAttributes,
         });
 
-        /**
-         * Shop and It's ordered Items
-         */
-        const preparedData = {
-          shop_id: order.shop_id,
-          items: itemsFormattedData,
-          amount: order.amount,
-          order_status: order.order_status,
-          payment_status: order.payment_status,
-          delievery_charge: order.delievery_charge,
-        };
-
-        return preparedData;
+        preparedData[index].dataValues.items = orderItems;
       })
     );
 
     return res.status(200).send({
       order_group_id: req.params.id,
-      orderData: shopsData,
+      data: preparedData,
     });
   } catch (error) {
     return res.status(500).send({
@@ -341,6 +303,7 @@ const prepareOrderData = async (body) => {
               price: inventory.price,
               quantity: item.quantity,
               inventory_id: item.item_id,
+              name: item.name,
             },
             inventoryData: {
               inventory_id: item.item_id,
@@ -611,20 +574,11 @@ const confirmOrderAction = async (req, res) => {
       message: 'Order Confirmed Successfully',
       data: order,
     });
-
-    // return res.writeHead(200, {
-    //   Location: `${config.FRONTEND_URL}/order/confirm?user_token=${req.body.user_token}&order_id=${orderId}&message=Order%20Confirmed%20Successfully`,
-    // });
   } catch (error) {
     return res.status(500).send({
       error: 'An Error Occured',
       data: error,
     });
-    // return res.writeHead(500, {
-    //   Location: `${config.FRONTEND_URL}/order/confirm?user_token=${
-    //     req.body.user_token
-    //   }&order_id&message=An%20Error%20Occured&error=${JSON.stringify(error)}`,
-    // });
   }
 };
 

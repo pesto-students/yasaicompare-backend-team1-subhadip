@@ -20,6 +20,10 @@ const OrderItemsModel = database.define(
       allowNull: false,
       uniqueKey: false,
     },
+    name: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
     price: {
       type: Sequelize.STRING,
       allowNull: false,
