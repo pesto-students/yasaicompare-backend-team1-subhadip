@@ -8,9 +8,6 @@ import config from '../config';
 const Operator = sequelize.Op;
 const DATABASE = database;
 const Stripe = StripeModule(config.STRIPE_PRIVATE_KEY);
-// const Stripe = StripeModule(process.env.STRIPE_SECRET_KEY, {
-//   apiVersion: "2022-08-01",
-// });
 
 /**
  * Fields for Order to Return
@@ -25,6 +22,16 @@ const attributes = [
   'delievery_charge',
   'createdAt',
   'updatedAt',
+];
+
+const orderItemAttributes = [
+  'item_id',
+  'inventory_id',
+  'order_id',
+  'price',
+  'quantity',
+  'fulfilled',
+  'rejection_reason',
 ];
 
 /**
@@ -56,6 +63,7 @@ const getOrdersAction = async (req, res) => {
       'order_status',
       'payment_status',
       'delievery_charge',
+      ['order_id', 'order_id_get_items'],
       'createdAt',
       'updatedAt',
     ],
@@ -80,11 +88,26 @@ const getOrdersAction = async (req, res) => {
       return res.status(404).send(returnResponse);
     }
 
+    const preparedData = orders;
+
+    await Promise.all(
+      orders.map(async (shopOrder, index) => {
+        const response = await Services.OrderItemService.getOrderItems({
+          where: {
+            order_id: shopOrder.dataValues.order_id_get_items,
+          },
+          attributes: orderItemAttributes,
+        });
+
+        preparedData[index].dataValues.items = response;
+      })
+    );
+
     /**
      * Orders Found
      */
     const returnData = {
-      orders,
+      preparedData,
     };
 
     return res.status(200).send(returnData);
@@ -119,14 +142,13 @@ const getOrderByIdAction = async (req, res) => {
         draft: false,
       },
       attributes,
-      group: ['shop_id'],
+      // group: ['shop_id'],
     };
 
     /**
      * Get Order Id from DB
      */
     const response = await Services.OrderService.getOrder(filter);
-
     /**
      * If Order Could Not be Found
      */
@@ -136,62 +158,24 @@ const getOrderByIdAction = async (req, res) => {
       });
     }
 
-    const shopsData = await Promise.all(
-      response.map(async (order) => {
-        /**
-         * Filter to get Shop Orders in Order
-         */
-        filter = {
+    const preparedData = response;
+
+    await Promise.all(
+      response.map(async (shopOrder, index) => {
+        const orderItems = await Services.OrderItemService.getOrderItems({
           where: {
-            shop_id: order.shop_id,
-            order_group_id: req.params.id,
+            order_id: shopOrder.order_id,
           },
-          attributes,
-        };
-        const orders = (await Services.OrderService.getAllOrders(filter))[0];
-
-        /**
-         * Filter to get Ordered Items from Shop in Order
-         */
-        filter = {
-          where: {
-            order_id: orders.order_id,
-          },
-        };
-        const items = await Services.OrderItemService.getOrderItems(filter);
-
-        const itemsFormattedData = items.map((item) => {
-          const formattedData = {
-            item_id: item.item_id,
-            order_id: item.order_id,
-            price: item.price,
-            quantity: item.quantity,
-            fulfilled: item.fulfilled,
-            rejection_reason: item.rejection_reason,
-          };
-
-          return formattedData;
+          attributes: orderItemAttributes,
         });
 
-        /**
-         * Shop and It's ordered Items
-         */
-        const preparedData = {
-          shop_id: order.shop_id,
-          items: itemsFormattedData,
-          amount: order.amount,
-          order_status: order.order_status,
-          payment_status: order.payment_status,
-          delievery_charge: order.delievery_charge,
-        };
-
-        return preparedData;
+        preparedData[index].dataValues.items = orderItems;
       })
     );
 
     return res.status(200).send({
       order_group_id: req.params.id,
-      orderData: shopsData,
+      data: preparedData,
     });
   } catch (error) {
     return res.status(500).send({
@@ -792,9 +776,32 @@ const updateOrderAction = async (req, res) => {
       attributes,
     });
 
+    const preparedData = order;
+    await Promise.all(
+      order.map(async (shopOrder, index) => {
+        let response = await Services.OrderItemService.updateOrderItems(
+          {
+            fulfilled: true,
+          },
+          { where: { order_id: shopOrder.order_id } }
+        );
+
+        if (response != null) {
+          response = await Services.OrderItemService.getOrderItems({
+            where: {
+              order_id: shopOrder.order_id,
+            },
+            attributes: orderItemAttributes,
+          });
+
+          preparedData[index].dataValues.items = response;
+        }
+      })
+    );
+
     return res.status(201).send({
       message: 'Order Updated Successfully',
-      data: order,
+      data: preparedData,
     });
   } catch (error) {
     return res.status(500).send({
