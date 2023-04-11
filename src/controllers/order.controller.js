@@ -28,6 +28,7 @@ const orderItemAttributes = [
   'item_id',
   'inventory_id',
   'order_id',
+  'name',
   'price',
   'quantity',
   'fulfilled',
@@ -135,7 +136,7 @@ const getOrderByIdAction = async (req, res) => {
     /**
      * Filter
      */
-    let filter = {
+    const filter = {
       where: {
         order_group_id: req.body.order_group_id,
         customer_id: req.body.customer_id,
@@ -302,6 +303,7 @@ const prepareOrderData = async (body) => {
               price: inventory.price,
               quantity: item.quantity,
               inventory_id: item.item_id,
+              name: item.name,
             },
             inventoryData: {
               inventory_id: item.item_id,
@@ -572,20 +574,11 @@ const confirmOrderAction = async (req, res) => {
       message: 'Order Confirmed Successfully',
       data: order,
     });
-
-    // return res.writeHead(200, {
-    //   Location: `${config.FRONTEND_URL}/order/confirm?user_token=${req.body.user_token}&order_id=${orderId}&message=Order%20Confirmed%20Successfully`,
-    // });
   } catch (error) {
     return res.status(500).send({
       error: 'An Error Occured',
       data: error,
     });
-    // return res.writeHead(500, {
-    //   Location: `${config.FRONTEND_URL}/order/confirm?user_token=${
-    //     req.body.user_token
-    //   }&order_id&message=An%20Error%20Occured&error=${JSON.stringify(error)}`,
-    // });
   }
 };
 

@@ -43,6 +43,7 @@ const orderItemAttributes = [
   'inventory_id',
   'order_id',
   'price',
+  'name',
   'quantity',
   'fulfilled',
   'rejection_reason',
