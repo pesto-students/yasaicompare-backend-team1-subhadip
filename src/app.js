@@ -63,7 +63,8 @@ const options = {
   key,
   cert,
 };
-const httpsServer = https.createServer(options, app);
+// const httpsServer = https.createServer(options, app);
+const httpsServer = https.createServer(app);
 
 httpsServer.listen(config.HTTPS_SERVER_PORT, async () => {
   logger.info(`server is up at ${config.HTTPS_SERVER_PORT}`);
