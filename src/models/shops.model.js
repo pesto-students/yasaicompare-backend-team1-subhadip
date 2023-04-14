@@ -31,7 +31,7 @@ const ShopsModel = database.define(
       uniqueKey: false,
     },
     pincode: {
-      type: Sequelize.STRING,
+      type: Sequelize.INTEGER,
       allowNull: false,
       uniqueKey: false,
     },
@@ -94,7 +94,7 @@ const ShopsModel = database.define(
   },
   {
     timestamps: true,
-    tableName: 'shops',
+    tableName: 'shops-new',
   }
 );
 

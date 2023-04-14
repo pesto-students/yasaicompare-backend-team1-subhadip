@@ -99,8 +99,9 @@ const createAddressValidator = (req, res, next) => {
    * Create Address Schema
    */
   const bodySchema = Joi.object({
+    label: Joi.string().min(3).max(50).required(),
     address_line_1: Joi.string().min(3).max(255).required(),
-    address_line_2: Joi.string().min(3).max(255).required(),
+    address_line_2: Joi.string().min(3).max(255).default(''),
     city: Joi.string().min(3).max(255).required(),
     state: Joi.string().min(3).max(255).required(),
     country: Joi.string().min(3).max(255).required(),
@@ -150,6 +151,7 @@ const updateAddressValidator = (req, res, next) => {
    */
   const bodySchema = Joi.object({
     id: Joi.string().min(3).max(255).required(),
+    label: Joi.string().min(3).max(50).optional(),
     address_line_1: Joi.string().min(3).max(255).optional(),
     address_line_2: Joi.string().min(3).max(255).optional(),
     city: Joi.string().min(3).max(255).optional(),

@@ -36,6 +36,7 @@ const getShopsAction = async (req, res) => {
    */
   const { active, limit, latitude, longitude, pincode, distance } = req.body;
   const pageInfo = req.body.page_info;
+  const parsedPincode = parseInt(pincode);
 
   /**
    * Filter Data
@@ -44,7 +45,10 @@ const getShopsAction = async (req, res) => {
     where: {
       active,
       pincode: {
-        [Operator.between]: [pincode + distance, pincode - distance],
+        [Operator.between]: [
+          parsedPincode - distance,
+          parsedPincode + distance,
+        ],
       },
     },
     attributes,
@@ -81,14 +85,14 @@ const getShopsAction = async (req, res) => {
         longitude: updatedShop.longitude,
       };
 
-      const distance = Helpers.DistanceHelper.getDistanceOfShop(
+      const calculatedDistance = Helpers.DistanceHelper.getDistanceOfShop(
         userLocation,
         shopLocation
       );
 
       delete updatedShop.latitude;
       delete updatedShop.longitude;
-      updatedShop.distance = distance;
+      updatedShop.distance = calculatedDistance;
 
       return updatedShop;
     });
@@ -201,7 +205,9 @@ const registerShopAction = async (req, res) => {
   const { body } = req;
 
   try {
-    const response = await Services.ShopsService.createShop(body);
+    const response = await Services.ShopsService.createShop(body, {
+      attributes,
+    });
 
     /**
      * If Shop Could Not be created
@@ -218,6 +224,7 @@ const registerShopAction = async (req, res) => {
      */
     const returnData = {
       message: 'Shop Created Successfully',
+      data: response,
     };
 
     return res.status(201).send(returnData);

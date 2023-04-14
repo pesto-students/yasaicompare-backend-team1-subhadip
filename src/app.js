@@ -14,9 +14,15 @@ import Routes from './routes';
 
 const app = express();
 const logger = Logger('app');
-const allowedOrigins = config.ALLOWED_ORIGINS.split(',');
+// const allowedOrigins = config.ALLOWED_ORIGINS.split(',');
 
-app.use(cors({ credentials: true, origin: allowedOrigins }));
+// app.use(cors({ credentials: true, origin: allowedOrigins }));
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(successHandler);
@@ -29,7 +35,6 @@ app.listen(config.SERVER_PORT, async () => {
   logger.info(`server is up at ${config.SERVER_PORT}`);
   try {
     await database.authenticate();
-    await database.sync({ force: false });
     logger.info(`DB connected`);
   } catch (err) {
     logger.error(`${err}`);
