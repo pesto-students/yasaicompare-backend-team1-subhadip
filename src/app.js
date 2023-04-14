@@ -14,10 +14,17 @@ import Routes from './routes';
 
 const app = express();
 const logger = Logger('app');
-// const allowedOrigins = config.ALLOWED_ORIGINS.split(',');
+const allowedOrigins = config.ALLOWED_ORIGINS.split(',');
 
-// app.use(cors({ credentials: true, origin: allowedOrigins }));
-
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      return callback(null, true);
+    },
+    optionsSuccessStatus: 200,
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(successHandler);
@@ -25,23 +32,6 @@ app.use(errorHandler);
 app.use(fileUpload());
 
 app.use('/', Routes);
-
-app.use(
-  cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true,
-  })
-);
-
-app.use(function (req, res, next) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  next();
-});
 
 app.listen(config.SERVER_PORT, async () => {
   logger.info(`server is up at ${config.SERVER_PORT}`);
@@ -63,8 +53,7 @@ const options = {
   key,
   cert,
 };
-// const httpsServer = https.createServer(options, app);
-const httpsServer = https.createServer(app);
+const httpsServer = https.createServer(options, app);
 
 httpsServer.listen(config.HTTPS_SERVER_PORT, async () => {
   logger.info(`server is up at ${config.HTTPS_SERVER_PORT}`);
