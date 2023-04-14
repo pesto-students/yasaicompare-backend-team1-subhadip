@@ -14,16 +14,12 @@ import Routes from './routes';
 
 const app = express();
 const logger = Logger('app');
-const allowedOrigins = config.ALLOWED_ORIGINS.split(',');
+// const allowedOrigins = config.ALLOWED_ORIGINS.split(',');
 
 // app.use(cors({ credentials: true, origin: allowedOrigins }));
 app.use(
   cors({
-    origin: '*',
-    // origin: function (origin, callback) {
-    //   return callback(null, true);
-    // },
-    // optionsSuccessStatus: 200,
+    origin: true,
     credentials: true,
   })
 );
