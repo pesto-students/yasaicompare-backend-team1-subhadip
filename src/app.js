@@ -16,7 +16,17 @@ const app = express();
 const logger = Logger('app');
 const allowedOrigins = config.ALLOWED_ORIGINS.split(',');
 
-app.use(cors({ credentials: true, origin: allowedOrigins }));
+// app.use(cors({ credentials: true, origin: allowedOrigins }));
+app.use(
+  cors({
+    origin: '*',
+    // origin: function (origin, callback) {
+    //   return callback(null, true);
+    // },
+    // optionsSuccessStatus: 200,
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(successHandler);
