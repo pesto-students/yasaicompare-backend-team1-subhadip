@@ -17,14 +17,6 @@ const logger = Logger('app');
 // const allowedOrigins = config.ALLOWED_ORIGINS.split(',');
 
 // app.use(cors({ credentials: true, origin: allowedOrigins }));
-app.use(
-  cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true,
-  })
-);
 
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -33,6 +25,15 @@ app.use(errorHandler);
 app.use(fileUpload());
 
 app.use('/', Routes);
+
+app.use(
+  cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type'],
+    credentials: true,
+  })
+);
 
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', '*');
