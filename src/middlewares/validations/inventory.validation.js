@@ -201,20 +201,16 @@ const updateInventoryValidator = async (req, res, next) => {
      * Update Body Params as Required
      */
 
-    const filter = {
-      filter: {
-        owner_id: userId,
-        shop_id: isValidParam.value.id,
-      },
+    req.body = {
+      filter: isValidParam.value,
       body: isValidBody.value,
     };
-    req.body = filter;
 
     /**
      * Checking if User is owner of Shop
      */
     const isOwnerOfShop = await Helpers.Validator.isOwnerOfShop(
-      req.body.shop_id,
+      req.body.filter.shop_id,
       userId
     );
 

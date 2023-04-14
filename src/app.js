@@ -19,10 +19,21 @@ const logger = Logger('app');
 // app.use(cors({ credentials: true, origin: allowedOrigins }));
 app.use(
   cors({
-    origin: true,
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type'],
     credentials: true,
   })
 );
+
+app.use(function (req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  next();
+});
+
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(successHandler);
