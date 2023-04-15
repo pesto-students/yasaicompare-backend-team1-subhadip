@@ -4,6 +4,8 @@ import Services from '../services';
 import database from '../database';
 import Helpers from '../utils/helpers';
 import config from '../config';
+import { v4 as uuidv4 } from 'uuid';
+import OrderId from 'order-id';
 
 const Operator = sequelize.Op;
 const DATABASE = database;
@@ -222,7 +224,8 @@ const prepareOrderData = async (body) => {
     col: 'customer_id',
   };
   const orderNumber = (await Services.OrderService.getOrdersCount(filter)) + 1;
-  const groupId = `${body.customer_id} - ${orderNumber}`;
+  // const groupId = `${body.customer_id} - ${orderNumber}`;
+  const groupId = OrderId.generate();
   let finalAmount = 0;
 
   const finalData = await Promise.all(
