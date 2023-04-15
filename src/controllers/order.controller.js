@@ -261,7 +261,7 @@ const prepareOrderData = async (body) => {
 
       const delieveryCharge = shop.dataValues.home_delievery_cost * distance;
 
-      const orderId = `${groupId} - ${order.shop_id}`;
+      const orderId = `${groupId}-${order.shop_id}`;
       let totalAmount = 0;
 
       /**
