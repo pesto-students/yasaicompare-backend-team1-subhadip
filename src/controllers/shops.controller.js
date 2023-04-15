@@ -130,7 +130,7 @@ const getShopByIdAction = async (req, res) => {
    * Dsstructuring Params
    */
   const { id } = req.params;
-  const { latitude, longitude, pincode } = req.query;
+  // const { latitude, longitude, pincode } = req.query;
 
   try {
     const response = await Services.ShopsService.getShopById(id, {
@@ -147,37 +147,37 @@ const getShopByIdAction = async (req, res) => {
       return res.status(404).send(returnResponse);
     }
 
-    if (response.dataValues.pincode !== pincode) {
-      return res.status(404).send({
-        error: 'Sorry the Shop Cannot deliever to your address',
-      });
-    }
+    // if (response.dataValues.pincode !== pincode) {
+    //   return res.status(404).send({
+    //     error: 'Sorry the Shop Cannot deliever to your address',
+    //   });
+    // }
 
     /**
      * Shop Found
      */
-    const updatedShop = response.dataValues;
+    // const updatedShop = response.dataValues;
 
-    const userLocation = {
-      latitude,
-      longitude,
-    };
+    // const userLocation = {
+    //   latitude,
+    //   longitude,
+    // };
 
-    const shopLocation = {
-      latitude: updatedShop.latitude,
-      longitude: updatedShop.longitude,
-    };
+    // const shopLocation = {
+    //   latitude: updatedShop.latitude,
+    //   longitude: updatedShop.longitude,
+    // };
 
-    const distance = Helpers.DistanceHelper.getDistanceOfShop(
-      userLocation,
-      shopLocation
-    );
+    // const distance = Helpers.DistanceHelper.getDistanceOfShop(
+    //   userLocation,
+    //   shopLocation
+    // );
 
-    delete updatedShop.latitude;
-    delete updatedShop.longitude;
-    updatedShop.distance = distance;
+    // delete updatedShop.latitude;
+    // delete updatedShop.longitude;
+    // updatedShop.distance = distance;
 
-    return res.status(200).send(updatedShop);
+    return res.status(200).send(response);
   } catch (error) {
     /**
      * Error Occured
