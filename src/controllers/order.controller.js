@@ -1,11 +1,10 @@
 import sequelize from 'sequelize';
 import StripeModule from 'stripe';
+import { v4 as uuidv4 } from 'uuid';
 import Services from '../services';
 import database from '../database';
 import Helpers from '../utils/helpers';
 import config from '../config';
-import { v4 as uuidv4 } from 'uuid';
-import OrderId from 'order-id';
 
 const Operator = sequelize.Op;
 const DATABASE = database;
@@ -213,6 +212,7 @@ const prepareOrderData = async (body) => {
     longitude: verfiedAddress.dataValues.longitude,
   };
 
+  const groupId = uuidv4();
   /**
    * Order Group ID
    */
@@ -225,7 +225,6 @@ const prepareOrderData = async (body) => {
   };
   const orderNumber = (await Services.OrderService.getOrdersCount(filter)) + 1;
   // const groupId = `${body.customer_id} - ${orderNumber}`;
-  const groupId = OrderId.generate();
   let finalAmount = 0;
 
   const finalData = await Promise.all(
