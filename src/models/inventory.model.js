@@ -32,7 +32,7 @@ const InventoryModel = database.define(
     },
     unit: {
       type: Sequelize.STRING,
-      enum: ['Kg, g, Litre, ml, no'],
+      enum: ['Kg, gram, Litre, ml, no'],
       allowNull: false,
     },
     in_stock: {
