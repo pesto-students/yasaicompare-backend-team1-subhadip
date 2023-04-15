@@ -139,7 +139,7 @@ const getInventoryByIdAction = async (req, res) => {
  */
 const createInventoryAction = async (req, res) => {
   try {
-    const response = await Services.InventoryService.createInventory(req.body, {
+    let response = await Services.InventoryService.createInventory(req.body, {
       attributes,
     });
 
@@ -152,6 +152,11 @@ const createInventoryAction = async (req, res) => {
     if (response === null) {
       return res.status(500).send(returnResponse);
     }
+
+    response = await Services.InventoryService.getInventoryById(
+      response.inventory_id,
+      { attributes }
+    );
 
     /**
      * Item Created Successfully
