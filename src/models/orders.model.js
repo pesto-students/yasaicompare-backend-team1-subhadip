@@ -32,13 +32,20 @@ const OrderModel = database.define(
     },
     order_status: {
       type: Sequelize.STRING,
-      enum: ['draft', 'pending, confirmed, in_transit, delievered', 'rejected'],
+      enum: [
+        'draft',
+        'pending',
+        'confirmed',
+        'in_transit',
+        'delievered',
+        'rejected',
+      ],
       allowNull: false,
       defaultValue: 'draft',
     },
     payment_status: {
       type: Sequelize.STRING,
-      enum: ['pending, paid, refunded'],
+      enum: ['pending', 'paid', 'refunded'],
       allowNull: false,
       defaultValue: 'pending',
     },

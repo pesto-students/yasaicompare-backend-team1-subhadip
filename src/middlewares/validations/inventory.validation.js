@@ -67,6 +67,7 @@ const getInventoryValidator = async (req, res, next) => {
    */
   if (!isValidParam?.error) {
     // Proceed to Route
+    req.body = isValidParam.value;
 
     next();
   } else {
@@ -97,6 +98,7 @@ const createInventoryValidator = async (req, res, next) => {
     price: Joi.number().precision(4).required(),
     quantity: Joi.number().integer().required(),
     in_stock: Joi.boolean().default(false),
+    unit: Joi.string().min(2).max(20).required(),
     image: Joi.string()
       .min(3)
       .max(255)
@@ -174,6 +176,7 @@ const updateInventoryValidator = async (req, res, next) => {
     price: Joi.number().precision(4),
     quantity: Joi.number().integer(),
     in_stock: Joi.boolean().default(false),
+    unit: Joi.string().min(2).max(20),
     image: Joi.string()
       .min(3)
       .max(255)
@@ -198,20 +201,16 @@ const updateInventoryValidator = async (req, res, next) => {
      * Update Body Params as Required
      */
 
-    const filter = {
-      filter: {
-        owner_id: userId,
-        shop_id: isValidParam.value.id,
-      },
+    req.body = {
+      filter: isValidParam.value,
       body: isValidBody.value,
     };
-    req.body = filter;
 
     /**
      * Checking if User is owner of Shop
      */
     const isOwnerOfShop = await Helpers.Validator.isOwnerOfShop(
-      req.body.shop_id,
+      req.body.filter.shop_id,
       userId
     );
 

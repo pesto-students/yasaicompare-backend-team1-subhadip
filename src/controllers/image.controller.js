@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
-import multer from 'multer';
-import config from '../config';
+// import multer from 'multer';
 import ImageKit from 'imagekit';
+import config from '../config';
 
-const upload = multer({ dest: 'uploads/' });
+// const upload = multer({ dest: 'uploads/' });
 const imagekit = new ImageKit({
   publicKey: config.IMAGEKIT_PUBLIC_KEY,
   privateKey: config.IMAGEKIT_PRIVATE_KEY,
@@ -12,8 +12,8 @@ const imagekit = new ImageKit({
 
 /**
  * Upload Profile Image
- * @param {object} req 
- * @param {object} res 
+ * @param {object} req
+ * @param {object} res
  * @returns object
  */
 const uploadProfileImage = async (req, res) => {
@@ -23,7 +23,7 @@ const uploadProfileImage = async (req, res) => {
       fileName: `${req.file.name}-${uuidv4()}`,
       folder: 'profile_images',
     };
-    const response = await imagekit
+    await imagekit
       .upload(uploadData)
       .then((response) => {
         return res.status(201).send({
@@ -45,8 +45,8 @@ const uploadProfileImage = async (req, res) => {
 
 /**
  * Upload Item Image
- * @param {object} req 
- * @param {object} res 
+ * @param {object} req
+ * @param {object} res
  * @returns object
  */
 const uploadItemImage = async (req, res) => {
@@ -56,7 +56,7 @@ const uploadItemImage = async (req, res) => {
       fileName: `${req.file.name}-${uuidv4()}`,
       folder: 'item_images',
     };
-    const response = await imagekit
+    await imagekit
       .upload(uploadData)
       .then((response) => {
         return res.status(201).send({

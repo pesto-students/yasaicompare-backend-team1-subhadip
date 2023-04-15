@@ -18,7 +18,7 @@ const searchACartItem = (params) => CartModel.findOne(params);
  * Get a Cart Item of User
  * @returns object
  */
-const getACartItem = (id) => CartModel.findByPk(id);
+const getACartItem = (id, options = {}) => CartModel.findByPk(id, options);
 
 /**
  * Update a Cart Item
@@ -30,7 +30,7 @@ const updateCartItem = (data, filter) => CartModel.update(data, filter);
  * Create a Cart Item
  * @returns object
  */
-const createCartItem = (data) => CartModel.create(data);
+const createCartItem = (data, options = {}) => CartModel.create(data, options);
 
 /**
  * Delete Cart By ID

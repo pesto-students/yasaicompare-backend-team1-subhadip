@@ -6,6 +6,10 @@ import Services from '../../services';
  * @returns string/bool
  */
 const headerValidator = (request) => {
+  if (Object.prototype.hasOwnProperty.call(request.query, 'user_token')) {
+    return request.query.user_token;
+  }
+
   if (!Object.keys(request.headers).length) {
     return false;
   }

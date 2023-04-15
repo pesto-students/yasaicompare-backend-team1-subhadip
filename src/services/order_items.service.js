@@ -36,10 +36,17 @@ const getOrdersCount = (filter) => OrderItemsModel.count(filter);
  */
 const deleteOrderItemId = (filter) => OrderItemsModel.destroy(filter);
 
+/**
+ * Update Order Items
+ * @returns object
+ */
+const updateOrderItems = (data, filter) => OrderItemsModel.update(data, filter);
+
 export default {
   getOrderItems,
   createOrderItem,
   getOrderById,
   getOrdersCount,
   deleteOrderItemId,
+  updateOrderItems,
 };

@@ -1,9 +1,10 @@
 import sequelize from 'sequelize';
+import StripeModule from 'stripe';
+import { v4 as uuidv4 } from 'uuid';
 import Services from '../services';
 import database from '../database';
 import Helpers from '../utils/helpers';
 import config from '../config';
-import StripeModule from 'stripe';
 
 const Operator = sequelize.Op;
 const DATABASE = database;
@@ -22,6 +23,17 @@ const attributes = [
   'delievery_charge',
   'createdAt',
   'updatedAt',
+];
+
+const orderItemAttributes = [
+  'item_id',
+  'inventory_id',
+  'order_id',
+  'name',
+  'price',
+  'quantity',
+  'fulfilled',
+  'rejection_reason',
 ];
 
 /**
@@ -46,10 +58,20 @@ const getOrdersAction = async (req, res) => {
    */
   const filter = {
     where: req.body,
-    attributes: [['order_group_id', 'order_id']],
+    attributes: [
+      ['order_group_id', 'order_id'],
+      'shop_id',
+      'amount',
+      'order_status',
+      'payment_status',
+      'delievery_charge',
+      ['order_id', 'order_id_get_items'],
+      'createdAt',
+      'updatedAt',
+    ],
     offset: pageInfo,
     limit,
-    group: ['order_group_id'],
+    group: ['order_id'],
   };
 
   try {
@@ -68,11 +90,26 @@ const getOrdersAction = async (req, res) => {
       return res.status(404).send(returnResponse);
     }
 
+    const preparedData = orders;
+
+    await Promise.all(
+      orders.map(async (shopOrder, index) => {
+        const response = await Services.OrderItemService.getOrderItems({
+          where: {
+            order_id: shopOrder.dataValues.order_id_get_items,
+          },
+          attributes: orderItemAttributes,
+        });
+
+        preparedData[index].dataValues.items = response;
+      })
+    );
+
     /**
      * Orders Found
      */
     const returnData = {
-      orders,
+      preparedData,
     };
 
     return res.status(200).send(returnData);
@@ -100,21 +137,20 @@ const getOrderByIdAction = async (req, res) => {
     /**
      * Filter
      */
-    let filter = {
+    const filter = {
       where: {
         order_group_id: req.body.order_group_id,
         customer_id: req.body.customer_id,
         draft: false,
       },
       attributes,
-      group: ['shop_id'],
+      // group: ['shop_id'],
     };
 
     /**
      * Get Order Id from DB
      */
-    const response = await Services.OrderService.getOrderById(filter);
-
+    const response = await Services.OrderService.getOrder(filter);
     /**
      * If Order Could Not be Found
      */
@@ -124,62 +160,24 @@ const getOrderByIdAction = async (req, res) => {
       });
     }
 
-    const shopsData = await Promise.all(
-      response.map(async (order) => {
-        /**
-         * Filter to get Shop Orders in Order
-         */
-        filter = {
+    const preparedData = response;
+
+    await Promise.all(
+      response.map(async (shopOrder, index) => {
+        const orderItems = await Services.OrderItemService.getOrderItems({
           where: {
-            shop_id: order.shop_id,
-            order_group_id: req.params.id,
+            order_id: shopOrder.order_id,
           },
-          attributes,
-        };
-        const orders = (await Services.OrderService.getAllOrders(filter))[0];
-
-        /**
-         * Filter to get Ordered Items from Shop in Order
-         */
-        filter = {
-          where: {
-            order_id: orders.order_id,
-          },
-        };
-        const items = await Services.OrderItemService.getOrderItems(filter);
-
-        const itemsFormattedData = items.map((item) => {
-          const formattedData = {
-            item_id: item.item_id,
-            order_id: item.order_id,
-            price: item.price,
-            quantity: item.quantity,
-            fulfilled: item.fulfilled,
-            rejection_reason: item.rejection_reason,
-          };
-
-          return formattedData;
+          attributes: orderItemAttributes,
         });
 
-        /**
-         * Shop and It's ordered Items
-         */
-        const preparedData = {
-          shop_id: order.shop_id,
-          items: itemsFormattedData,
-          amount: order.amount,
-          order_status: order.order_status,
-          payment_status: order.payment_status,
-          delievery_charge: order.delievery_charge,
-        };
-
-        return preparedData;
+        preparedData[index].dataValues.items = orderItems;
       })
     );
 
     return res.status(200).send({
       order_group_id: req.params.id,
-      orderData: shopsData,
+      data: preparedData,
     });
   } catch (error) {
     return res.status(500).send({
@@ -214,6 +212,7 @@ const prepareOrderData = async (body) => {
     longitude: verfiedAddress.dataValues.longitude,
   };
 
+  const groupId = uuidv4();
   /**
    * Order Group ID
    */
@@ -225,8 +224,8 @@ const prepareOrderData = async (body) => {
     col: 'customer_id',
   };
   const orderNumber = (await Services.OrderService.getOrdersCount(filter)) + 1;
-  const groupId = `${body.customer_id} - ${orderNumber}`;
-  let finalAmount = 0.50;
+  // const groupId = `${body.customer_id} - ${orderNumber}`;
+  let finalAmount = 0;
 
   const finalData = await Promise.all(
     body.orders.map(async (order) => {
@@ -262,7 +261,7 @@ const prepareOrderData = async (body) => {
 
       const delieveryCharge = shop.dataValues.home_delievery_cost * distance;
 
-      const orderId = `${groupId} - ${order.shop_id}`;
+      const orderId = `${groupId}-${order.shop_id}`;
       let totalAmount = 0;
 
       /**
@@ -287,6 +286,16 @@ const prepareOrderData = async (body) => {
               },
               in_stock: true,
             },
+            attributes: [
+              ['inventory_id', 'item_id'],
+              'shop_id',
+              'name',
+              'price',
+              'quantity',
+              'in_stock',
+              'image',
+              'unit',
+            ],
           };
 
           const inventory = await Services.InventoryService.getInventory(
@@ -306,6 +315,7 @@ const prepareOrderData = async (body) => {
               price: inventory.price,
               quantity: item.quantity,
               inventory_id: item.item_id,
+              name: inventory.name,
             },
             inventoryData: {
               inventory_id: item.item_id,
@@ -376,11 +386,31 @@ const createOrderAction = async (req, res) => {
   /**
    * Order Group Id
    */
-  const { groupId, totalAmount } = preparedData;
+  const { orderId, totalAmount } = preparedData;
+
+  if (totalAmount === 0) {
+    return res.status(400).send({
+      error: `Item(s) are Out of Stock`,
+    });
+  }
+
+  let paymentIntent = {};
   try {
-    const paymentIntent = await Stripe.paymentIntents.create({
+    paymentIntent = await Stripe.paymentIntents.create({
       amount: Math.round((totalAmount * 100).toFixed(2)),
       currency: 'inr',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        customer_id:
+          (
+            await Helpers.JWT.decodeJWTToken(
+              await Helpers.Validator.headerValidator(req)
+            )
+          )?.data?.user_id || '',
+        order_group_id: orderId,
+      },
     });
   } catch (error) {
     return res.status(500).send({
@@ -446,7 +476,8 @@ const createOrderAction = async (req, res) => {
 
     if (!orderPlaced) {
       return res.status(404).send({
-        error: 'Order Could Not be Placed. Item cannot be delieverd at your location',
+        error:
+          'Order Could Not be Placed. Item cannot be delieverd at your location',
       });
     }
 
@@ -457,7 +488,7 @@ const createOrderAction = async (req, res) => {
 
     const returnData = {
       message: 'Order Waiting for Confirmation',
-      order_id: groupId,
+      order_id: orderId,
       paymentData: paymentIntent,
     };
 
@@ -489,12 +520,21 @@ const createOrderAction = async (req, res) => {
 const confirmOrderAction = async (req, res) => {
   const orderId = req.body.order_group_id;
   const customerId = req.body.customer_id;
-  const transactionId = req.body.transaction_id;
+  const transactionId = req.body.payment_intent;
 
   /**
    * Payment Confirmation
    */
-  const paymentIntent = await Stripe.paymentIntents.confirm(transactionId);
+  let paymentIntent = {};
+  try {
+    paymentIntent = await Stripe.paymentIntents.retrieve(transactionId);
+  } catch (error) {
+    return res.status(500).send({
+      error: 'Error Occured',
+      data: error,
+    });
+  }
+
   if (paymentIntent.status !== 'succeeded') {
     return res.status(400).send({
       error: 'Payment not Confirmed',
@@ -506,11 +546,10 @@ const confirmOrderAction = async (req, res) => {
    */
   const filter = {
     where: {
-      order_id: orderId,
+      order_group_id: orderId,
       customer_id: customerId,
       draft: true,
     },
-    attributes,
   };
 
   try {
@@ -519,12 +558,14 @@ const confirmOrderAction = async (req, res) => {
      */
     const data = {
       draft: false,
+      payment_status: 'paid',
+      order_status: 'pending',
     };
 
     /**
      * Hitting Service
      */
-    const order = await Services.OrderService.updateOrder(data, filter);
+    let order = await Services.OrderService.updateOrder(data, filter);
 
     if (order === null) {
       return res.status(400).send({
@@ -532,12 +573,22 @@ const confirmOrderAction = async (req, res) => {
       });
     }
 
+    order = await Services.OrderService.getOrder({
+      where: {
+        order_group_id: orderId,
+        customer_id: customerId,
+        draft: false,
+      },
+      attributes,
+    });
+
     return res.status(201).send({
       message: 'Order Confirmed Successfully',
+      data: order,
     });
   } catch (error) {
     return res.status(500).send({
-      error: 'An error Occured while confirm the Order',
+      error: 'An Error Occured',
       data: error,
     });
   }
@@ -690,10 +741,86 @@ const deleteOrderAction = async (req, res) => {
   }
 };
 
+/**
+ * Update Order
+ * @param {object} req
+ * @param {object} res
+ * @returns object
+ */
+const updateOrderAction = async (req, res) => {
+  const { filter, data } = req.body;
+
+  filter.draft = false;
+
+  /**
+   * If Merchant Tries to change status to delievered
+   */
+  if (data.order_status !== 'delievered') {
+    return res.status(400).send({
+      error: 'User Cannot update the Status except Delievered',
+    });
+  }
+
+  try {
+    /**
+     * Hitting Service
+     */
+    let order = await Services.OrderService.updateOrder(data, {
+      where: filter,
+      attributes,
+    });
+
+    if (order === null) {
+      return res.status(400).send({
+        error: 'Order Not Found',
+      });
+    }
+
+    order = await Services.OrderService.getOrder({
+      where: filter,
+      attributes,
+    });
+
+    const preparedData = order;
+    await Promise.all(
+      order.map(async (shopOrder, index) => {
+        let response = await Services.OrderItemService.updateOrderItems(
+          {
+            fulfilled: true,
+          },
+          { where: { order_id: shopOrder.order_id } }
+        );
+
+        if (response != null) {
+          response = await Services.OrderItemService.getOrderItems({
+            where: {
+              order_id: shopOrder.order_id,
+            },
+            attributes: orderItemAttributes,
+          });
+
+          preparedData[index].dataValues.items = response;
+        }
+      })
+    );
+
+    return res.status(201).send({
+      message: 'Order Updated Successfully',
+      data: preparedData,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      error: 'An Error Occured',
+      data: error,
+    });
+  }
+};
+
 export default {
   getOrdersAction,
   createOrderAction,
   getOrderByIdAction,
   confirmOrderAction,
   deleteOrderAction,
+  updateOrderAction,
 };

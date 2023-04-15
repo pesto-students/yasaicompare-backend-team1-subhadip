@@ -12,6 +12,7 @@ const userAttributes = [
 
 const userAddressAttributes = [
   'id',
+  'label',
   'address_line_1',
   'address_line_2',
   'city',
@@ -114,7 +115,9 @@ const createAddress = async (req, res) => {
   const { body } = req;
 
   try {
-    const response = await Services.UserAddressService.createAddress(body, userAddressAttributes);
+    const response = await Services.UserAddressService.createAddress(body, {
+      attributes: userAddressAttributes,
+    });
 
     /**
      * If Address Could Not be added
@@ -144,9 +147,10 @@ const updateAddress = async (req, res) => {
   const { body } = req;
 
   try {
+    let response = await Services.UserAddressService.updateAddress(body, {
+      attributes: userAddressAttributes,
+    });
 
-    const response = await Services.UserAddressService.updateAddress(body, userAddressAttributes);
-    
     /**
      * If Address Could Not be updated
      */
@@ -156,6 +160,11 @@ const updateAddress = async (req, res) => {
       };
       return res.status(500).send(returnResponse);
     }
+
+    response = await Services.UserAddressService.getAddressById({
+      where: { id: body.id, user_id: body.user_id },
+      attributes: userAddressAttributes,
+    });
 
     return res.status(200).send({
       response,

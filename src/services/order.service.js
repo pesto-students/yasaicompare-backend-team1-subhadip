@@ -15,11 +15,18 @@ const getAllOrders = (params) => OrderModel.findAll(params);
 const createOrder = (data, transaction) => OrderModel.create(data, transaction);
 
 /**
- * Get Shop By ID
+ * Get Order
  * @param { string } id
  * @returns object
  */
-const getOrderById = (filter) => OrderModel.findAll(filter);
+const getOrder = (filter) => OrderModel.findAll(filter);
+
+/**
+ * Get Order By ID
+ * @param { string } id
+ * @returns object
+ */
+const getOrderById = (filter) => OrderModel.findOne(filter);
 
 /**
  * Get Order Count
@@ -44,6 +51,7 @@ const deleteOrderById = (filter) => OrderModel.destroy(filter);
 export default {
   getAllOrders,
   createOrder,
+  getOrder,
   getOrderById,
   getOrdersCount,
   updateOrder,
